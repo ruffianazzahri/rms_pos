@@ -1,17 +1,20 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>POS Dash</title>
 
-        <!-- Favicon -->
-        <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}"/>
-        <link rel="stylesheet" href="{{ asset('assets/css/backend-plugin.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('assets/css/backend.css?v=1.0.0') }}">
-        <link href="https://cdn.jsdelivr.net/gh/hung1001/font-awesome-pro@4cac1a6/css/all.css" rel="stylesheet" type="text/css" />
-        <link rel="stylesheet" href="{{ asset('assets/vendor/remixicon/fonts/remixicon.css') }}">
-    </head>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>RMS Dash</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/css/backend-plugin.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/backend.css?v=1.0.0') }}">
+    <link href="https://cdn.jsdelivr.net/gh/hung1001/font-awesome-pro@4cac1a6/css/all.css" rel="stylesheet"
+        type="text/css" />
+    <link rel="stylesheet" href="{{ asset('assets/vendor/remixicon/fonts/remixicon.css') }}">
+</head>
+
 <body>
 
     <!-- Wrapper Start -->
@@ -28,7 +31,8 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-sm-12">
-                                    <img src="{{ asset('assets/images/logo.png') }}" class="logo-invoice img-fluid mb-3">
+                                    <img src="{{ asset('assets/images/logo.png') }}"
+                                        class="logo-invoice img-fluid mb-3">
                                     <h5 class="mb-3">Hello, {{ $customer->name }}</h5>
                                 </div>
                             </div>
@@ -51,7 +55,8 @@
                                                     <td>250028</td>
                                                     <td>
                                                         <p class="mb-0">{{ $customer->address }}<br>
-                                                            Shop Name: {{ $customer->shopname ? $customer->shopname : '-' }}<br>
+                                                            Shop Name: {{ $customer->shopname ? $customer->shopname :
+                                                            '-' }}<br>
                                                             Phone: {{ $customer->phone }}<br>
                                                             Email: {{ $customer->email }}<br>
                                                         </p>
@@ -97,10 +102,13 @@
                             <div class="row">
                                 <div class="col-sm-12">
                                     <b class="text-danger">Notes:</b>
-                                    <p class="mb-0">It is a long established fact that a reader will be distracted by the readable content of a page
+                                    <p class="mb-0">It is a long established fact that a reader will be distracted by
+                                        the readable content of a page
                                         when looking
-                                        at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters,
-                                        as opposed to using 'Content here, content here', making it look like readable English.</p>
+                                        at its layout. The point of using Lorem Ipsum is that it has a more-or-less
+                                        normal distribution of letters,
+                                        as opposed to using 'Content here, content here', making it look like readable
+                                        English.</p>
                                 </div>
                             </div>
                             <div class="row mt-4 mb-3">
@@ -129,7 +137,8 @@
                                                 <p>${{ Cart::tax() }}</p>
                                             </div>
                                         </div>
-                                        <div class="ttl-amt py-2 px-3 d-flex justify-content-between align-items-center">
+                                        <div
+                                            class="ttl-amt py-2 px-3 d-flex justify-content-between align-items-center">
                                             <h6>Total</h6>
                                             <h3 class="text-primary font-weight-700">${{ Cart::total() }}</h3>
                                         </div>
@@ -145,9 +154,10 @@
     <!-- Wrapper End-->
 
     <script>
-    window.addEventListener("load", (event) => {
+        window.addEventListener("load", (event) => {
         window.print();
     });
     </script>
 </body>
+
 </html>
