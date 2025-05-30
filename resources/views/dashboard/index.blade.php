@@ -4,14 +4,14 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-lg-12">
-        @if (session()->has('success'))
+            @if (session()->has('success'))
             <div class="alert text-white bg-success" role="alert">
                 <div class="iq-alert-text">{{ session('success') }}</div>
                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <i class="ri-close-line"></i>
+                    <i class="ri-close-line"></i>
                 </button>
             </div>
-        @endif
+            @endif
         </div>
         <div class="col-lg-4">
             <div class="card card-transparent card-block card-stretch card-height border-none">
@@ -32,7 +32,7 @@
                                 </div>
                                 <div>
                                     <p class="mb-2">Total Paid</p>
-                                    <h4>$ {{ $total_paid }}</h4>
+                                    <h4>Rp {{ $total_paid }}</h4>
                                 </div>
                             </div>
                             <div class="iq-progress-bar mt-2">
@@ -51,7 +51,7 @@
                                 </div>
                                 <div>
                                     <p class="mb-2">Total Due</p>
-                                    <h4>$ {{ $total_due }}</h4>
+                                    <h4>Rp {{ $total_due }}</h4>
                                 </div>
                             </div>
                             <div class="iq-progress-bar mt-2">
@@ -96,9 +96,9 @@
                             </span>
                             <div class="dropdown-menu dropdown-menu-right shadow-none"
                                 aria-labelledby="dropdownMenuButton001">
-                                <a class="dropdown-item" href="#">Year</a>
-                                <a class="dropdown-item" href="#">Month</a>
-                                <a class="dropdown-item" href="#">Week</a>
+                                <a class="dropdown-item" href="#">Tahun</a>
+                                <a class="dropdown-item" href="#">Bulan</a>
+                                <a class="dropdown-item" href="#">Minggu</a>
                             </div>
                         </div>
                     </div>
@@ -149,21 +149,22 @@
                             </span>
                             <div class="dropdown-menu dropdown-menu-right shadow-none"
                                 aria-labelledby="dropdownMenuButton006">
-                                <a class="dropdown-item" href="#">Year</a>
-                                <a class="dropdown-item" href="#">Month</a>
-                                <a class="dropdown-item" href="#">Week</a>
+                                <a class="dropdown-item" href="#">Tahun</a>
+                                <a class="dropdown-item" href="#">Bulan</a>
+                                <a class="dropdown-item" href="#">Minggu</a>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
                     <ul class="list-unstyled row top-product mb-0">
-                    @foreach ($products as $product)
+                        @foreach ($products as $product)
                         <li class="col-lg-3">
                             <div class="card card-block card-stretch card-height mb-0">
                                 <div class="card-body">
                                     <div class="bg-warning-light rounded">
-                                        <img src="{{ $product->product_image ? asset('storage/products/'.$product->product_image) : asset('assets/images/product/default.webp') }}" class="style-img img-fluid m-auto p-3" alt="image">
+                                        <img src="{{ $product->product_image ? asset('storage/products/'.$product->product_image) : asset('assets/images/product/default.webp') }}"
+                                            class="style-img img-fluid m-auto p-3" alt="image">
                                     </div>
                                     <div class="style-text text-left mt-3">
                                         <h5 class="mb-1">{{ $product->product_name }}</h5>
@@ -172,7 +173,7 @@
                                 </div>
                             </div>
                         </li>
-                    @endforeach
+                        @endforeach
                     </ul>
                 </div>
             </div>
@@ -198,7 +199,7 @@
                         <div class="style-text text-left">
                             <h5 class="mb-2">{{ $product->product_name }}</h5>
                             <p class="mb-2">Stock : {{ $product->product_store }}</p>
-                            <p class="mb-0">Price : ${{ $product->selling_price }}</p>
+                            <p class="mb-0">Price : Rp{{ $product->selling_price }}</p>
                         </div>
                     </div>
                 </div>
