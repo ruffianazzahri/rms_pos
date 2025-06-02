@@ -14,7 +14,9 @@
 
     <link rel="stylesheet" href="{{ asset('assets/vendor/line-awesome/dist/line-awesome/css/line-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendor/remixicon/fonts/remixicon.css') }}">
-
+    <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/css/all.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/css/regular.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/css/solid.css') }}">
     @yield('specificpagestyles')
 </head>
 
@@ -47,6 +49,9 @@
 
     <!-- App JavaScript -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
+    <script src="{{ asset('assets/vendor/fontawesome/js/fontawesome.js') }}"></script>
+    <script src="{{ asset('assets/vendor/fontawesome/js/regular.js') }}"></script>
+    <script src="{{ asset('assets/vendor/fontawesome/js/solid.js') }}"></script>
 </body>
 
 </html>

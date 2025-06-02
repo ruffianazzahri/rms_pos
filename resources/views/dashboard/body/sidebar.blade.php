@@ -1,4 +1,4 @@
-<div class="iq-sidebar sidebar-default ">
+<div class="iq-sidebar sidebar-default " style="background-color: #FFD95F">
     <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
         <a href="{{ route('dashboard') }}" class="header-logo">
             <img src="{{ asset('assets/images/logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo">
