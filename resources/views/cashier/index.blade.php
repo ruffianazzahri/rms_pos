@@ -116,6 +116,27 @@
             </div>
         </div>
     </div>
+    <!-- Modal Detail Transaksi -->
+    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detail Transaksi</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="detailModalBody">
+                    <!-- Isi detail transaksi akan dimasukkan di sini lewat JS -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="closeDetailModal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
 </div>
 
@@ -191,7 +212,44 @@
     });
 
     document.getElementById('confirmSubmit').addEventListener('click', function () {
-        document.getElementById('form-transaksi').submit();
+    document.getElementById('confirmSubmit').addEventListener('click', function () {
+    const form = document.getElementById('form-transaksi');
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': formData.get('_token'),
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            $('#confirmModal').modal('hide');
+            const order = data.order;
+            let html = `
+                <p><strong>Invoice:</strong> ${order.invoice_no}</p>
+                <p><strong>Tanggal:</strong> ${new Date(order.order_date).toLocaleString()}</p>
+                <p><strong>Total Produk:</strong> ${order.total_products}</p>
+                <p><strong>Total Harga:</strong> Rp ${order.total.toLocaleString()}</p>
+                <p><strong>Status Pembayaran:</strong> ${order.payment_status}</p>
+            `;
+            document.getElementById('detailModalBody').innerHTML = html;
+            $('#detailModal').modal('show');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('Terjadi kesalahan.');
+    });
+});
+
+// Reload halaman setelah modal detail ditutup
+$('#detailModal').on('hidden.bs.modal', function () {
+    location.reload();
+});
     });
 </script>
 
@@ -257,5 +315,9 @@
         renderCart();
     }
 </script>
-
+<script>
+    document.getElementById('form-transaksi').addEventListener('submit', function(e) {
+    e.preventDefault(); // penting!
+});
+</script>
 @endsection

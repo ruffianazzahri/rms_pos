@@ -36,21 +36,16 @@ class CashierController extends Controller
             'method' => 'required|in:cash,qris,debit,credit,e-wallet',
         ]);
 
-
-        $items = json_decode($request->items, true); // array of products
-
-        //dd($items);
+        $items = json_decode($request->items, true);
 
         if (empty($items)) {
-            return back()->with('error', 'Keranjang kosong!');
+            return response()->json(['error' => 'Keranjang kosong!'], 422);
         }
 
         DB::beginTransaction();
         try {
-            // Hitung total
             $subTotal = array_sum(array_column($items, 'subtotal'));
 
-            // Simpan Order
             $order = Order::create([
                 'customer_id'    => $request->customer_id,
                 'order_date'     => now(),
@@ -65,7 +60,6 @@ class CashierController extends Controller
                 'due'            => 0,
             ]);
 
-            // Simpan Order Details
             foreach ($items as $item) {
                 OrderDetails::create([
                     'order_id'  => $order->id,
@@ -76,7 +70,6 @@ class CashierController extends Controller
                 ]);
             }
 
-            // Simpan Payment
             Payment::create([
                 'order_id' => $order->id,
                 'method'   => $request->method,
@@ -86,12 +79,20 @@ class CashierController extends Controller
             ]);
 
             DB::commit();
-            return redirect()->route('cashier.index')->with('success', 'Transaksi berhasil disimpan!');
+
+            // Return detail order sebagai response JSON
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi berhasil disimpan!',
+                'order'   => $order,
+                // Bisa tambahkan detail lain seperti customer, payment, order details jika perlu
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan transaksi: ' . $e->getMessage());
+            return response()->json(['error' => 'Gagal menyimpan transaksi: ' . $e->getMessage()], 500);
         }
     }
+
 
     public function show(Payment $payment)
     {
