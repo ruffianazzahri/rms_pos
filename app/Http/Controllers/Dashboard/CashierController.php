@@ -48,7 +48,7 @@ class CashierController extends Controller
 
             $order = Order::create([
                 'customer_id'    => $request->customer_id,
-                'order_date'     => now(),
+                'order_date'     => \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y'),
                 'order_status'   => 'completed',
                 'total_products' => array_sum(array_column($items, 'qty')),
                 'sub_total'      => $subTotal,
@@ -75,7 +75,7 @@ class CashierController extends Controller
                 'method'   => $request->method,
                 'amount'   => $subTotal,
                 'status'   => 'paid',
-                'paid_at'  => now(),
+                'paid_at'  => \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y'),
             ]);
 
             DB::commit();
@@ -85,7 +85,6 @@ class CashierController extends Controller
                 'success' => true,
                 'message' => 'Transaksi berhasil disimpan!',
                 'order'   => $order,
-                // Bisa tambahkan detail lain seperti customer, payment, order details jika perlu
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

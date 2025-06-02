@@ -320,4 +320,9 @@ $('#detailModal').on('hidden.bs.modal', function () {
     e.preventDefault(); // penting!
 });
 </script>
+<script>
+    document.getElementById('closeDetailModal').addEventListener('click', function () {
+        $('#detailModal').modal('hide');
+    });
+</script>
 @endsection

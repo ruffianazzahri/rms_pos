@@ -11,14 +11,17 @@
                             <div class="p-3">
 
                                 <h2 class="mb-2">Register</h2>
-                                <p>Create your POSDash account.</p>
+                                <p>Create your RMS POS account.</p>
 
                                 <form method="POST" action="{{ route('register') }}">
                                     @csrf
                                     <div class="row">
                                         <div class="col-lg-12">
                                             <div class="floating-label form-group">
-                                                <input class="floating-input form-control @error('name') is-invalid @enderror" type="text" placeholder=" " name="name" autocomplete="off" value="{{ old('name') }}" required>
+                                                <input
+                                                    class="floating-input form-control @error('name') is-invalid @enderror"
+                                                    type="text" placeholder=" " name="name" autocomplete="off"
+                                                    value="{{ old('name') }}" required>
                                                 <label>Full Name</label>
                                             </div>
                                             @error('name')
@@ -30,7 +33,10 @@
 
                                         <div class="col-lg-12">
                                             <div class="floating-label form-group">
-                                                <input class="floating-input form-control @error('username') is-invalid @enderror" type="text" placeholder=" " name="username" autocomplete="off" value="{{ old('username') }}"  required>
+                                                <input
+                                                    class="floating-input form-control @error('username') is-invalid @enderror"
+                                                    type="text" placeholder=" " name="username" autocomplete="off"
+                                                    value="{{ old('username') }}" required>
                                                 <label class="mb-1">Username</label>
                                             </div>
                                             @error('username')
@@ -42,7 +48,10 @@
 
                                         <div class="col-lg-12">
                                             <div class="floating-label form-group">
-                                                <input class="floating-input form-control @error('email') is-invalid @enderror" type="email" placeholder=" " name="email" autocomplete="off" value="{{ old('email') }}" required>
+                                                <input
+                                                    class="floating-input form-control @error('email') is-invalid @enderror"
+                                                    type="email" placeholder=" " name="email" autocomplete="off"
+                                                    value="{{ old('email') }}" required>
                                                 <label>Email</label>
                                             </div>
                                             @error('email')
@@ -54,7 +63,10 @@
 
                                         <div class="col-lg-6">
                                             <div class="floating-label form-group">
-                                                <input class="floating-input form-control @error('password') is-invalid @enderror" type="password" placeholder=" "  name="password" autocomplete="off" required>
+                                                <input
+                                                    class="floating-input form-control @error('password') is-invalid @enderror"
+                                                    type="password" placeholder=" " name="password" autocomplete="off"
+                                                    required>
                                                 <label>Password</label>
                                             </div>
                                             @error('password')
@@ -65,14 +77,17 @@
                                         </div>
                                         <div class="col-lg-6">
                                             <div class="floating-label form-group">
-                                                <input class="floating-input form-control" type="password" placeholder=" " name="password_confirmation" autocomplete="off" required>
+                                                <input class="floating-input form-control" type="password"
+                                                    placeholder=" " name="password_confirmation" autocomplete="off"
+                                                    required>
                                                 <label>Confirm Password</label>
                                             </div>
                                         </div>
                                     </div>
                                     <button type="submit" class="btn btn-primary">Register</button>
                                     <p class="mt-3">
-                                        Already have an Account? <a href="{{ route('login') }}" class="text-primary">Log In</a>
+                                        Already have an Account? <a href="{{ route('login') }}" class="text-primary">Log
+                                            In</a>
                                     </p>
                                 </form>
                             </div>
