@@ -8,7 +8,7 @@
 
 @section('container')
 <div class="container">
-    <h2>🧾 Sissssssssssssstem Kasir RMS Batam</h2>
+    <h2>🧾 Sistem Kasir RMS Batam</h2>
     @if(session('success'))
     <div class="alert alert-success">
         {{ session('success') }}
@@ -27,6 +27,10 @@
     <div class="menu">
         <h4>Menu / Produk</h4>
         <div class="grid">
+            <div class="mb-3">
+                <input type="text" id="search-product" class="form-control" placeholder="Cari produk...">
+            </div>
+
             @foreach($products as $product)
             <button class="add-item" data-id="{{ $product->id }}" data-name="{{ $product->product_name }}"
                 data-price="{{ $product->selling_price }}">
@@ -104,6 +108,21 @@
 </style>
 
 
+<script>
+    const searchInput = document.getElementById('search-product');
+
+    searchInput.addEventListener('input', function () {
+        const keyword = this.value.toLowerCase();
+        document.querySelectorAll('.add-item').forEach(button => {
+            const name = button.dataset.name.toLowerCase();
+            if (name.includes(keyword)) {
+                button.style.display = '';
+            } else {
+                button.style.display = 'none';
+            }
+        });
+    });
+</script>
 
 <script>
     const cart = [];
