@@ -14,9 +14,10 @@ use App\Http\Controllers\Dashboard\AdvanceSalaryController;
 use App\Http\Controllers\Dashboard\DatabaseBackupController;
 use App\Http\Controllers\Dashboard\OrderController;
 use App\Http\Controllers\Dashboard\PosController;
+use App\Http\Controllers\Dashboard\POSKafeController;
 use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
-
+use App\Http\Controllers\Dashboard\CashierController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -95,7 +96,7 @@ Route::middleware(['permission:category.menu'])->group(function () {
 
 // ====== POS ======
 Route::middleware(['permission:pos.menu'])->group(function () {
-    Route::get('/pos', [PosController::class,'index'])->name('pos.index');
+    Route::get('/pos', [PosController::class, 'index'])->name('pos.index');
     Route::post('/pos/add', [PosController::class, 'addCart'])->name('pos.addCart');
     Route::post('/pos/update/{rowId}', [PosController::class, 'updateCart'])->name('pos.updateCart');
     Route::get('/pos/delete/{rowId}', [PosController::class, 'deleteCart'])->name('pos.deleteCart');
@@ -104,6 +105,12 @@ Route::middleware(['permission:pos.menu'])->group(function () {
 
     // Create Order
     Route::post('/pos/order', [OrderController::class, 'storeOrder'])->name('pos.storeOrder');
+});
+
+// POS KHUSUS KAFE
+Route::middleware('auth')->group(function () {
+    Route::get('/cashier', [CashierController::class, 'index'])->name('cashier.index');
+    Route::post('/cashier/transaksi', [CashierController::class, 'store'])->name('cashier.transaksi');
 });
 
 // ====== ORDERS ======
@@ -158,4 +165,4 @@ Route::middleware(['permission:roles.menu'])->group(function () {
     Route::delete('/role/permission/{id}', [RoleController::class, 'rolePermissionDestroy'])->name('rolePermission.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

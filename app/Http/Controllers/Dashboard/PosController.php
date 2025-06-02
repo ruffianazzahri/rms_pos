@@ -88,6 +88,16 @@ class PosController extends Controller
         ]);
     }
 
+    public function createCafeInvoice(Request $request)
+    {
+        $request->validate(['customer_id' => 'required']);
+        $customer = Customer::findOrFail($request->customer_id);
+        $content = Cart::content();
+
+        return view('pos.cafe-invoice', compact('customer', 'content'));
+    }
+
+
     public function printInvoice(Request $request)
     {
         $rules = [
