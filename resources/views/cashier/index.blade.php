@@ -75,16 +75,48 @@
 
             <label for="method">Metode Pembayaran:</label>
             <select name="method" class="form-control" required>
-                <option value="cash">Cash</option>
+                <option value="cash" selected>Cash</option>
                 <option value="qris">QRIS</option>
                 <option value="debit">Debit</option>
                 <option value="credit">Credit</option>
                 <option value="e-wallet">E-Wallet</option>
             </select>
 
-            <button class="btn btn-primary mt-3" type="submit">💰 Bayar</button>
+            <div id="cash-fields" style="display:none;" class="mt-3">
+                <label for="cash_received">Uang Diterima (Rp):</label>
+                <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal" min="0">
+
+                <label class="mt-2">Kembalian:</label>
+                <input type="text" id="cash-change" class="form-control" readonly>
+            </div>
+
+
+            <button class="btn btn-primary mt-3" type="button" id="openConfirmModal">💰 Bayar</button>
+
         </form>
     </div>
+    <!-- Modal Konfirmasi -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Konfirmasi Pembayaran</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Apakah Anda yakin ingin memproses transaksi ini?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="button" id="confirmSubmit" class="btn btn-primary">Ya, Proses</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <style>
@@ -106,6 +138,62 @@
         margin-top: 2rem;
     }
 </style>
+
+<script>
+    const methodSelect = document.querySelector('select[name="method"]');
+    const cashFields = document.getElementById('cash-fields');
+    const cashReceived = document.getElementById('cash-received');
+    const cashChange = document.getElementById('cash-change');
+
+    function toggleCashFields() {
+        if (methodSelect.value === 'cash') {
+            cashFields.style.display = 'block';
+        } else {
+            cashFields.style.display = 'none';
+            cashReceived.value = '';
+            cashChange.value = '';
+        }
+    }
+
+    methodSelect.addEventListener('change', toggleCashFields);
+
+    // Jalankan saat pertama kali halaman dimuat
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleCashFields();
+    });
+
+    cashReceived.addEventListener('input', function () {
+        const received = parseFloat(this.value);
+        const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+        const change = received - total;
+        cashChange.value = change >= 0 ? 'Rp ' + change.toLocaleString() : 'Rp 0';
+    });
+
+    document.getElementById('openConfirmModal').addEventListener('click', function () {
+        const selectedMethod = methodSelect.value;
+
+        if (!selectedMethod) {
+            alert('Pilih metode pembayaran terlebih dahulu.');
+            return;
+        }
+
+        if (selectedMethod === 'cash') {
+            const received = parseFloat(cashReceived.value || 0);
+            const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+
+            if (isNaN(received) || received < total) {
+                alert('Uang tunai kurang dari total pembayaran.');
+                return;
+            }
+        }
+
+        $('#confirmModal').modal('show');
+    });
+
+    document.getElementById('confirmSubmit').addEventListener('click', function () {
+        document.getElementById('form-transaksi').submit();
+    });
+</script>
 
 
 <script>
