@@ -132,6 +132,9 @@ Route::middleware(['permission:orders.menu'])->group(function () {
     Route::get('/stock', [OrderController::class, 'stockManage'])->name('order.stockManage');
 });
 
+Route::get('/print-nota/{id}', [CashierController::class, 'printNota'])->name('nota.print');
+
+
 // ====== DATABASE BACKUP ======
 Route::middleware(['permission:database.menu'])->group(function () {
     Route::get('/database/backup', [DatabaseBackupController::class, 'index'])->name('backup.index');

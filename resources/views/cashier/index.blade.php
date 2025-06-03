@@ -102,7 +102,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Konfirmasi Pembayaran</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup" id="closeDetailModal">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -131,6 +131,7 @@
                     <!-- Isi detail transaksi akan dimasukkan di sini lewat JS -->
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="printNota">Print Nota</button>
                     <button type="button" class="btn btn-primary" id="closeDetailModal">Tutup</button>
                 </div>
             </div>
@@ -211,7 +212,7 @@
         $('#confirmModal').modal('show');
     });
 
-    document.getElementById('confirmSubmit').addEventListener('click', function () {
+
     document.getElementById('confirmSubmit').addEventListener('click', function () {
     const form = document.getElementById('form-transaksi');
     const formData = new FormData(form);
@@ -229,6 +230,14 @@
         if (data.success) {
             $('#confirmModal').modal('hide');
             const order = data.order;
+            const method = document.querySelector('select[name="method"]').value;
+            const uangDiterima = parseInt(document.getElementById('cash-received').value || '0');
+            let kembalian = 0;
+
+            if (method === 'cash') {
+                kembalian = uangDiterima - order.total;
+            }
+
             let html = `
                 <p><strong>Invoice:</strong> ${order.invoice_no}</p>
                 <p><strong>Tanggal:</strong> ${new Date(order.order_date).toLocaleString()}</p>
@@ -236,10 +245,53 @@
                 <p><strong>Total Harga:</strong> Rp ${order.total.toLocaleString()}</p>
                 <p><strong>Status Pembayaran:</strong> ${order.payment_status}</p>
             `;
+
+            if (method === 'cash') {
+                html += `
+                    <p><strong>Uang Diterima:</strong> Rp ${uangDiterima.toLocaleString()}</p>
+                    <p><strong>Kembalian:</strong> Rp ${kembalian >= 0 ? kembalian.toLocaleString() : 0}</p>
+                `;
+            }
+
+            html += `
+                <hr>
+                <h5>Rincian Produk:</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>Produk</th>
+                                <th>Qty</th>
+                                <th>Harga Satuan</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            order.order_details.forEach(detail => {
+                html += `
+                    <tr>
+                        <td>${detail.product.product_name}</td>
+                        <td>${detail.quantity}</td>
+                        <td>Rp ${detail.unitcost.toLocaleString()}</td>
+                        <td>Rp ${detail.total.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
             document.getElementById('detailModalBody').innerHTML = html;
             $('#detailModal').modal('show');
+              window.lastOrderId = order.id; // <- Simpan ID order secara global
         }
     })
+
     .catch(err => {
         console.error(err);
         alert('Terjadi kesalahan.');
@@ -250,7 +302,6 @@
 $('#detailModal').on('hidden.bs.modal', function () {
     location.reload();
 });
-    });
 </script>
 
 
@@ -324,5 +375,27 @@ $('#detailModal').on('hidden.bs.modal', function () {
     document.getElementById('closeDetailModal').addEventListener('click', function () {
         $('#detailModal').modal('hide');
     });
+</script>
+<script>
+    document.getElementById('printNota').addEventListener('click', function () {
+    const orderId = window.lastOrderId;
+
+    console.log(orderId);
+
+    fetch(`/print-nota/${orderId}`)
+        .then(response => response.text())
+        .then(notaText => {
+            const win = window.open('', '', 'width=300,height=600');
+            win.document.write(`<pre>${notaText}</pre>`);
+            win.document.close();
+            win.focus();
+            win.print();
+            win.close();
+        })
+        .catch(err => {
+            alert('Gagal mencetak nota.');
+            console.error(err);
+        });
+});
 </script>
 @endsection

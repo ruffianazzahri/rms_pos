@@ -1,5 +1,19 @@
 @extends('dashboard.body.main')
+<style>
+    .filter-label {
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-right: 10px;
+        white-space: nowrap;
+        align-self: center;
+    }
 
+    .dropdown-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+</style>
 @section('container')
 <div class="container-fluid">
     <div class="row">
@@ -14,12 +28,33 @@
             @endif
         </div>
         <div class="col-lg-4">
-            <div class="card card-transparent card-block card-stretch card-height border-none">
-                <div class="card-body p-0 mt-lg-2 mt-0">
-                    <h3 class="mb-3">Hi {{ auth()->user()->name }}, Good Morning</h3>
-                    <p class="mb-0 mr-4">Your dashboard gives you views of key performance or business process.</p>
-                </div>
-            </div>
+            @php
+            $hour = \Carbon\Carbon::now()->hour;
+
+            $quotes = [
+            "Kesuksesan adalah hasil dari persiapan, kerja keras, dan belajar dari kegagalan.",
+            "Jangan takut gagal, karena kegagalan adalah guru terbaik dalam hidup.",
+            "Mulailah hari ini dengan semangat baru dan tujuan yang jelas.",
+            "Keberhasilan terbesar datang dari usaha yang tidak pernah menyerah.",
+            "Setiap langkah kecil membawa kita lebih dekat ke tujuan besar.",
+            "Jangan berhenti ketika kamu lelah, berhentilah ketika kamu selesai.",
+            "Kunci kesuksesan adalah fokus dan konsistensi.",
+            ];
+
+            $randomQuote = $quotes[array_rand($quotes)];
+
+            if ($hour >= 4 && $hour < 10) { $greeting='Selamat pagi' ; } elseif ($hour>= 10 && $hour < 15) {
+                    $greeting='Selamat siang' ; } elseif ($hour>= 15 && $hour < 18) { $greeting='Selamat sore' ; } else
+                        { $greeting='Selamat malam' ; } $userName=auth()->user()->name;
+                        @endphp
+
+                        <div class="card card-transparent card-block card-stretch card-height border-none">
+                            <div class="card-body p-0 mt-lg-2 mt-0">
+                                <h3 class="mb-3">{{ $greeting }}, {{ $userName }}!</h3>
+                                <p class="mb-0 mr-4"><em>{{ $randomQuote }}</em></p>
+                            </div>
+                        </div>
+
         </div>
         <div class="col-lg-8">
             <div class="row">
@@ -27,11 +62,12 @@
                     <div class="card card-block card-stretch card-height">
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-4 card-total-sale">
-                                <div class="icon iq-icon-box-2 bg-info-light">
-                                    <img src="../assets/images/product/1.png" class="img-fluid" alt="image">
+                                <div class="icon iq-icon-box-2">
+                                    <i class="fas fa-money-bill-wave fa-2x text-info"></i>
                                 </div>
+
                                 <div>
-                                    <p class="mb-2">Total Paid</p>
+                                    <p class="mb-2">Jumlah Transaksi Tunai</p>
                                     <h4>Rp {{ number_format($total_paid, 0, ',', ',') }}</h4>
                                 </div>
                             </div>
@@ -46,11 +82,12 @@
                     <div class="card card-block card-stretch card-height">
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-4 card-total-sale">
-                                <div class="icon iq-icon-box-2 bg-danger-light">
-                                    <img src="../assets/images/product/2.png" class="img-fluid" alt="image">
+                                <div class="icon iq-icon-box-2">
+                                    <i class="fas fa-hourglass-half fa-2x text-danger"></i>
                                 </div>
+
                                 <div>
-                                    <p class="mb-2">Total Due</p>
+                                    <p class="mb-2">Total Terutang</p>
                                     <h4>Rp {{ number_format($total_due, 0, ',', ',') }}</h4>
                                 </div>
                             </div>
@@ -65,9 +102,10 @@
                     <div class="card card-block card-stretch card-height">
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-4 card-total-sale">
-                                <div class="icon iq-icon-box-2 bg-success-light">
-                                    <img src="../assets/images/product/3.png" class="img-fluid" alt="image">
+                                <div class="icon iq-icon-box-2">
+                                    <i class="fas fa-clipboard-check fa-2x text-success"></i>
                                 </div>
+
                                 <div>
                                     <p class="mb-2">Complete Orders</p>
                                     <h4>{{ count($complete_orders) }}</h4>
@@ -82,31 +120,37 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6">
+        <div class="col-lg-12">
             <div class="card card-block card-stretch card-height">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="header-title">
                         <h4 class="card-title">Omzet Penjualan</h4>
                     </div>
-                    <div class="card-header-toolbar d-flex align-items-center gap-2">
-                        <div class="dropdown mr-2">
-                            <span class="dropdown-toggle dropdown-bg btn btn-sm btn-outline-primary"
-                                id="dropdownMenuButton001" data-toggle="dropdown">
-                                Bulan <i class="ri-arrow-down-s-line ml-1"></i>
-                            </span>
-                            <div class="dropdown-menu dropdown-menu-right shadow-none"
-                                aria-labelledby="dropdownMenuButton001">
-                                <a class="dropdown-item" href="#" data-period="yearly">Tahun</a>
-                                <a class="dropdown-item" href="#" data-period="monthly">Bulan</a>
-                                <a class="dropdown-item" href="#" data-period="weekly">Minggu</a>
+
+
+                    <div class="card-header-toolbar d-flex align-items-center justify-content-between">
+                        <div class="dropdown-wrapper">
+                            <span class="filter-label">Filter data berdasarkan</span>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
+                                    id="dropdownMenuButton001" data-toggle="dropdown" aria-haspopup="true"
+                                    aria-expanded="false">
+                                    Bulan <i class="ri-arrow-down-s-line ml-1"></i>
+                                </button>
+                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton001">
+                                    <a class="dropdown-item" href="#" data-period="yearly">Tahun</a>
+                                    <a class="dropdown-item" href="#" data-period="monthly">Bulan</a>
+                                    <a class="dropdown-item" href="#" data-period="weekly">Minggu</a>
+                                </div>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-success" data-toggle="modal"
+
+                        <button type="button" class="btn btn-sm btn-outline-success ml-3" data-toggle="modal"
                             data-target="#printModal">
                             <i class="ri-printer-line"></i> Print
                         </button>
-
                     </div>
+
                 </div>
                 <div class="card-body">
                     <canvas id="layout1-chart1" width="400" height="200"></canvas>
@@ -120,7 +164,7 @@
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="printModalLabel">Pilih Periode Cetak</h5>
+                        <h5 class="modal-title" id="printModalLabel">Pilih Periode</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -138,7 +182,7 @@
         </div>
 
 
-        <div class="col-lg-6">
+        {{-- <div class="col-lg-6">
             <div class="card card-block card-stretch card-height">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <div class="header-title">
@@ -163,7 +207,7 @@
                     <div id="layout1-chart-2" style="min-height: 360px;"></div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
         <div class="col-lg-8">
             <div class="card card-block card-stretch card-height">

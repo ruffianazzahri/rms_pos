@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>RMS Dash</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}" />
@@ -52,6 +53,7 @@
     <script src="{{ asset('assets/vendor/fontawesome/js/fontawesome.js') }}"></script>
     <script src="{{ asset('assets/vendor/fontawesome/js/regular.js') }}"></script>
     <script src="{{ asset('assets/vendor/fontawesome/js/solid.js') }}"></script>
+
 </body>
 
 </html>

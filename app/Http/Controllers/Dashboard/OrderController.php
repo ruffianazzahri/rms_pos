@@ -13,6 +13,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Redirect;
 use Gloudemans\Shoppingcart\Facades\Cart;
 use Haruncpi\LaravelIdGenerator\IdGenerator;
+use Illuminate\Support\Facades\Response;
 
 class OrderController extends Controller
 {
@@ -55,6 +56,41 @@ class OrderController extends Controller
 
         return view('orders.complete-orders', [
             'orders' => $orders
+        ]);
+    }
+
+    public function printNota($id)
+    {
+        $order = Order::with(['orderDetails.product', 'customer'])->findOrFail($id);
+
+        $nota = "";
+        $nota .= "RMS BATAM\n";
+        $nota .= "--------------------------\n";
+        $nota .= "Invoice: " . $order->invoice_no . "\n";
+        $nota .= "Tanggal: " . $order->order_date->format('d-m-Y H:i') . "\n";
+        if ($order->customer) {
+            $nota .= "Pelanggan: " . $order->customer->name . "\n";
+        }
+        $nota .= "--------------------------\n";
+
+        foreach ($order->orderDetails as $item) {
+            $name = $item->product->product_name;
+            $qty = $item->quantity;
+            $price = number_format($item->unitcost);
+            $total = number_format($item->total);
+            $nota .= "{$name}\n  {$qty} x Rp{$price} = Rp{$total}\n";
+        }
+
+        $nota .= "--------------------------\n";
+        $nota .= "Total Produk : {$order->total_products}\n";
+        $nota .= "Total Harga  : Rp" . number_format($order->total) . "\n";
+        $nota .= "Bayar        : Rp" . number_format($order->pay) . "\n";
+        $nota .= "Kembalian    : Rp" . number_format($order->due < 0 ? abs($order->due) : 0) . "\n";
+        $nota .= "--------------------------\n";
+        $nota .= "Terima Kasih\n";
+
+        return Response::make($nota, 200, [
+            'Content-Type' => 'text/plain',
         ]);
     }
 
