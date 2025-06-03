@@ -150,7 +150,7 @@ class CashierController extends Controller
         $order = Order::with(['orderDetails.product', 'customer'])->findOrFail($id);
 
         // Ambil data dari request, kalau tidak ada pakai data di database
-        $pay = $request->input('pay', $order->pay);
+        $pay = $request->input('pay', $order->pay); // fallback ke nilai database
         $change = $request->input('change', max(0, $pay - $order->total));
         $method = $request->input('method', $order->payment_method ?? 'Tidak diketahui');
 

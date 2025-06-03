@@ -16,7 +16,7 @@
                             <script>
                                 document.write(new Date().getFullYear())
                             </script>©
-                        </span> <a href="{{ route('dashboard') }}" class="">RMS Dash</a>.
+                        </span> <a href="{{ route('dashboard') }}" class="">RMS POS</a>.
                     </div>
                 </div>
             </div>

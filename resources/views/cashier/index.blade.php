@@ -95,50 +95,49 @@
 
         </form>
     </div>
-    <!-- Modal Konfirmasi -->
-    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Konfirmasi Pembayaran</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup" id="closeDetailModal">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    Apakah Anda yakin ingin memproses transaksi ini?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <button type="button" id="confirmSubmit" class="btn btn-primary">Ya, Proses</button>
-                </div>
+</div>
+
+<!-- Modal Konfirmasi -->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Konfirmasi Pembayaran</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Tutup" id="closeDetailModal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Apakah Anda yakin ingin memproses transaksi ini?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" id="confirmSubmit" class="btn btn-primary">Ya, Proses</button>
             </div>
         </div>
     </div>
-    <!-- Modal Detail Transaksi -->
-    <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Detail Transaksi</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="detailModalBody">
-                    <!-- Isi detail transaksi akan dimasukkan di sini lewat JS -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="printNota">Print Nota</button>
-                    <button type="button" class="btn btn-primary" id="closeDetailModal">Tutup</button>
-                </div>
+</div>
+<!-- Modal Detail Transaksi -->
+<div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog  modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detail Transaksi</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="detailModalBody">
+                <!-- Isi detail transaksi akan dimasukkan di sini lewat JS -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="printNota">Print Nota</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="closeDetailModal">Tutup</button>
             </div>
         </div>
     </div>
-
-
 </div>
 
 <style>
@@ -300,7 +299,7 @@
 
 // Reload halaman setelah modal detail ditutup
 $('#detailModal').on('hidden.bs.modal', function () {
-    location.reload();
+    window.location.reload(true);
 });
 </script>
 
@@ -374,28 +373,47 @@ $('#detailModal').on('hidden.bs.modal', function () {
 <script>
     document.getElementById('closeDetailModal').addEventListener('click', function () {
         $('#detailModal').modal('hide');
+        windows.location.reload(true);
     });
 </script>
 <script>
     document.getElementById('printNota').addEventListener('click', function () {
     const orderId = window.lastOrderId;
 
-    console.log(orderId);
+    const methodSelect = document.querySelector('select[name="method"]');
+    const cashReceived = document.getElementById('cash-received');
+    const cashChange = document.getElementById('cash-change');
 
-    fetch(`/print-nota/${orderId}`)
-        .then(response => response.text())
-        .then(notaText => {
-            const win = window.open('', '', 'width=300,height=600');
-            win.document.write(`<pre>${notaText}</pre>`);
-            win.document.close();
-            win.focus();
-            win.print();
-            win.close();
-        })
-        .catch(err => {
-            alert('Gagal mencetak nota.');
-            console.error(err);
-        });
+    const pay = cashReceived ? parseInt(cashReceived.value) || 0 : 0;
+    const change = cashChange ? parseInt(cashChange.value.replace(/[^\d]/g, '')) || 0 : 0;
+    const method = methodSelect ? methodSelect.value : 'Tidak diketahui';
+
+    const params = new URLSearchParams({
+        pay: pay,
+        change: change,
+        method: method
+    }).toString();
+
+    fetch(`/print-nota/${orderId}?${params}`, {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        }
+    })
+    .then(response => response.text())
+    .then(notaText => {
+        const win = window.open('', '', 'width=300,height=600');
+        win.document.write(`<pre>${notaText}</pre>`);
+        win.document.close();
+        win.focus();
+        win.print();
+        win.close();
+    })
+    .catch(err => {
+        alert('Gagal mencetak nota.');
+        console.error(err);
+    });
 });
+
 </script>
 @endsection
