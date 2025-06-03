@@ -49,7 +49,7 @@ class CashierController extends Controller
 
             $order = Order::create([
                 'customer_id'    => $request->customer_id,
-                'order_date' => Carbon::now('Asia/Jakarta'),
+                'order_date'     => Carbon::now('Asia/Jakarta'),
                 'order_status'   => 'completed',
                 'total_products' => array_sum(array_column($items, 'qty')),
                 'sub_total'      => $subTotal,
@@ -62,12 +62,24 @@ class CashierController extends Controller
             ]);
 
             foreach ($items as $item) {
+                $product = Product::findOrFail($item['id']);
+
+                // Cek apakah stok cukup
+                if ($product->product_store < $item['qty']) {
+                    throw new \Exception("Stok untuk produk '{$product->product_name}' tidak cukup.");
+                }
+
+                // Kurangi stok
+                $product->product_store -= $item['qty'];
+                $product->save();
+
+                // Simpan detail pesanan
                 OrderDetails::create([
-                    'order_id'  => $order->id,
+                    'order_id'   => $order->id,
                     'product_id' => $item['id'],
-                    'quantity'  => $item['qty'],
-                    'unitcost'  => $item['price'],
-                    'total'     => $item['subtotal'],
+                    'quantity'   => $item['qty'],
+                    'unitcost'   => $item['price'],
+                    'total'      => $item['subtotal'],
                 ]);
             }
 
@@ -81,7 +93,6 @@ class CashierController extends Controller
 
             DB::commit();
 
-            // Return detail order sebagai response JSON
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil disimpan!',

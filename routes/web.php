@@ -18,6 +18,7 @@ use App\Http\Controllers\Dashboard\POSKafeController;
 use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Dashboard\CashierController;
+use App\Http\Controllers\Dashboard\ChartController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -164,5 +165,10 @@ Route::middleware(['permission:roles.menu'])->group(function () {
     Route::put('/role/permission/{id}', [RoleController::class, 'rolePermissionUpdate'])->name('rolePermission.update');
     Route::delete('/role/permission/{id}', [RoleController::class, 'rolePermissionDestroy'])->name('rolePermission.destroy');
 });
+
+//chart
+
+
+Route::get('/chart/orders', [ChartController::class, 'getOrdersChartData']);
 
 require __DIR__ . '/auth.php';

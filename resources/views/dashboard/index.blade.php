@@ -32,7 +32,7 @@
                                 </div>
                                 <div>
                                     <p class="mb-2">Total Paid</p>
-                                    <h4>Rp {{ $total_paid }}</h4>
+                                    <h4>Rp {{ number_format($total_paid, 0, ',', ',') }}</h4>
                                 </div>
                             </div>
                             <div class="iq-progress-bar mt-2">
@@ -51,7 +51,7 @@
                                 </div>
                                 <div>
                                     <p class="mb-2">Total Due</p>
-                                    <h4>Rp {{ $total_due }}</h4>
+                                    <h4>Rp {{ number_format($total_due, 0, ',', ',') }}</h4>
                                 </div>
                             </div>
                             <div class="iq-progress-bar mt-2">
@@ -86,25 +86,26 @@
             <div class="card card-block card-stretch card-height">
                 <div class="card-header d-flex justify-content-between">
                     <div class="header-title">
-                        <h4 class="card-title">Overview</h4>
+                        <h4 class="card-title">Omzet Penjualan</h4>
                     </div>
                     <div class="card-header-toolbar d-flex align-items-center">
                         <div class="dropdown">
                             <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton001"
                                 data-toggle="dropdown">
-                                This Month<i class="ri-arrow-down-s-line ml-1"></i>
+                                Bulan <i class="ri-arrow-down-s-line ml-1"></i>
                             </span>
                             <div class="dropdown-menu dropdown-menu-right shadow-none"
                                 aria-labelledby="dropdownMenuButton001">
-                                <a class="dropdown-item" href="#">Tahun</a>
-                                <a class="dropdown-item" href="#">Bulan</a>
-                                <a class="dropdown-item" href="#">Minggu</a>
+                                <a class="dropdown-item" href="#" data-period="yearly">Tahun</a>
+                                <a class="dropdown-item" href="#" data-period="monthly">Bulan</a>
+                                <a class="dropdown-item" href="#" data-period="weekly">Minggu</a>
                             </div>
                         </div>
+
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="layout1-chart1"></div>
+                    <canvas id="layout1-chart1" width="400" height="200"></canvas>
                 </div>
             </div>
         </div>
@@ -212,10 +213,128 @@
 @endsection
 
 @section('specificpagescripts')
-<!-- Table Treeview JavaScript -->
-<script src="{{ asset('assets/js/table-treeview.js') }}"></script>
-<!-- Chart Custom JavaScript -->
-<script src="{{ asset('assets/js/customizer.js') }}"></script>
-<!-- Chart Custom JavaScript -->
-<script async src="{{ asset('assets/js/chart-custom.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+
+<script>
+    $(function() {
+    const $dropdownToggle = $('#dropdownMenuButton001');
+    let currentPeriod = 'monthly'; // default
+
+    // Init canvas dan chart kosong dulu
+    const ctx = document.getElementById('layout1-chart1').getContext('2d');
+    let chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Omzet',
+                data: [],
+                fill: true,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(context) {
+                            const val = context[0].label;
+
+                            if (currentPeriod === 'daily') {
+                                return moment(val).format('DD MMM YYYY');
+                            }
+                            else if (currentPeriod === 'monthly') {
+                                // Format jadi 01 Januari 1970 (tanggal 1 + bulan + tahun)
+                                return moment(val, 'YYYY-MM').startOf('month').format('DD MMMM YYYY');
+                            }
+                            else if (currentPeriod === 'yearly') {
+                                return val;
+                            }
+                            else if (currentPeriod === 'weekly') {
+                                // Format "Minggu X bulan ini"
+                                // val sudah berbentuk "Week XX, YYYY" dari backend
+                                // Kita ambil angka minggu (XX) dan ubah jadi "Minggu X bulan ini"
+                                // Tapi untuk "bulan ini" perlu tahu bulan sekarang
+
+                                const mingguMatch = val.match(/Week (\d+), (\d{4})/);
+                                if (mingguMatch) {
+                                    const weekNumber = parseInt(mingguMatch[1], 10);
+
+                                    // Gunakan moment untuk bulan sekarang
+                                    const bulanIni = moment().format('MMMM');
+
+                                    return `Minggu ${weekNumber} bulan ini`;
+                                }
+                                return val;
+                            }
+
+                            return val;
+                        },
+
+                        label: function(context) {
+                            // ambil value data
+                            let value = context.parsed.y;
+                            // format dengan ribuan dan prefix Rp
+                            return 'Omzet: Rp ' + value.toLocaleString('id-ID');
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { maxRotation: 45, minRotation: 45 },
+                    type: 'category'
+                },
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    function loadChartData(period) {
+        $.ajax({
+            url: '/chart/orders',
+            method: 'GET',
+            data: { period: period },
+            success: function(response) {
+                let textMap = { yearly: 'Tahun', monthly: 'Bulan', weekly: 'Minggu', daily: 'Harian' };
+                $dropdownToggle.html(textMap[period] + ' <i class="ri-arrow-down-s-line ml-1"></i>');
+                currentPeriod = period;
+
+                // Extract labels & data dari response
+                const labels = response.series[0].data.map(item => item.x);
+                const data = response.series[0].data.map(item => item.y);
+
+                // Update chart data
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = data;
+                chart.update();
+            },
+            error: function() {
+                alert('Gagal mengambil data chart!');
+            }
+        });
+    }
+
+    // Event dropdown klik
+    $('.dropdown-menu a').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const selectedPeriod = $(this).data('period');
+        if (selectedPeriod && selectedPeriod !== currentPeriod) {
+            loadChartData(selectedPeriod);
+        }
+    });
+
+    // Load default data monthly
+    loadChartData(currentPeriod);
+});
+
+
+</script>
 @endsection

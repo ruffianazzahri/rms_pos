@@ -60,21 +60,21 @@
                     </a>
                     <ul id="orders" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle" style="">
 
-                        <li class="{{ Request::is('orders/pending*') ? 'active' : '' }}">
+                        {{-- <li class="{{ Request::is('orders/pending*') ? 'active' : '' }}">
                             <a href="{{ route('order.pendingOrders') }}">
                                 <i class="fa-solid fa-arrow-right"></i><span>Pending Orders</span>
                             </a>
-                        </li>
+                        </li> --}}
                         <li class="{{ Request::is('orders/complete*') ? 'active' : '' }}">
                             <a href="{{ route('order.completeOrders') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span>Complete Orders</span>
+                                <i class="fa-solid fa-arrow-right"></i><span> Complete Orders</span>
                             </a>
                         </li>
-                        <li class="{{ Request::is('pending/due*') ? 'active' : '' }}">
+                        {{-- <li class="{{ Request::is('pending/due*') ? 'active' : '' }}">
                             <a href="{{ route('order.pendingDue') }}">
                                 <i class="fa-solid fa-arrow-right"></i><span>Pending Due</span>
                             </a>
-                        </li>
+                        </li> --}}
                         <li class="{{ Request::is(['stock*']) ? 'active' : '' }}">
                             <a href="{{ route('order.stockManage') }}">
                                 <i class="fa-solid fa-arrow-right"></i><span>Stock Management</span>
