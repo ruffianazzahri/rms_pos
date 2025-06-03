@@ -37,17 +37,27 @@ class OrderController extends Controller
     public function completeOrders()
     {
         $row = (int) request('row', 10);
+        $search = request('search');
 
         if ($row < 1 || $row > 100) {
             abort(400, 'The per-page parameter must be an integer between 1 and 100.');
         }
 
-        $orders = Order::where('order_status', 'complete')->sortable()->paginate($row);
+        $orders = Order::where('order_status', 'completed')
+            ->when($search, function ($query, $search) {
+                $query->whereHas('customer', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })->orWhere('invoice_no', 'like', "%{$search}%");
+            })
+            ->orderBy('order_date', 'desc')
+            ->sortable()
+            ->paginate($row);
 
         return view('orders.complete-orders', [
             'orders' => $orders
         ]);
     }
+
 
     public function stockManage()
     {

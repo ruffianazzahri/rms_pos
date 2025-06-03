@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\OrderDetails;
 use Illuminate\Support\Facades\DB;
 use App\Models\Customer;
+use Carbon\Carbon;
 
 class CashierController extends Controller
 {
@@ -48,7 +49,7 @@ class CashierController extends Controller
 
             $order = Order::create([
                 'customer_id'    => $request->customer_id,
-                'order_date'     => \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y'),
+                'order_date' => Carbon::now('Asia/Jakarta'),
                 'order_status'   => 'completed',
                 'total_products' => array_sum(array_column($items, 'qty')),
                 'sub_total'      => $subTotal,
@@ -75,7 +76,7 @@ class CashierController extends Controller
                 'method'   => $request->method,
                 'amount'   => $subTotal,
                 'status'   => 'paid',
-                'paid_at'  => \Carbon\Carbon::now()->locale('id')->translatedFormat('d F Y'),
+                'paid_at'  => Carbon::now('Asia/Jakarta'),
             ]);
 
             DB::commit();
