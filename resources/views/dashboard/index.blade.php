@@ -84,14 +84,14 @@
         </div>
         <div class="col-lg-6">
             <div class="card card-block card-stretch card-height">
-                <div class="card-header d-flex justify-content-between">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="header-title">
                         <h4 class="card-title">Omzet Penjualan</h4>
                     </div>
-                    <div class="card-header-toolbar d-flex align-items-center">
-                        <div class="dropdown">
-                            <span class="dropdown-toggle dropdown-bg btn" id="dropdownMenuButton001"
-                                data-toggle="dropdown">
+                    <div class="card-header-toolbar d-flex align-items-center gap-2">
+                        <div class="dropdown mr-2">
+                            <span class="dropdown-toggle dropdown-bg btn btn-sm btn-outline-primary"
+                                id="dropdownMenuButton001" data-toggle="dropdown">
                                 Bulan <i class="ri-arrow-down-s-line ml-1"></i>
                             </span>
                             <div class="dropdown-menu dropdown-menu-right shadow-none"
@@ -101,6 +101,10 @@
                                 <a class="dropdown-item" href="#" data-period="weekly">Minggu</a>
                             </div>
                         </div>
+                        <button type="button" class="btn btn-sm btn-outline-success" data-toggle="modal"
+                            data-target="#printModal">
+                            <i class="ri-printer-line"></i> Print
+                        </button>
 
                     </div>
                 </div>
@@ -109,6 +113,31 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal Pilihan Cetak -->
+        <div class="modal fade" id="printModal" tabindex="-1" role="dialog" aria-labelledby="printModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="printModalLabel">Pilih Periode Cetak</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <a href="{{ route('omzet.print.form', ['period' => 'daily']) }}" target="_blank"
+                            class="btn btn-outline-primary m-2">Harian</a>
+                        <a href="{{ route('omzet.print.form', ['period' => 'weekly']) }}" target="_blank"
+                            class="btn btn-outline-info m-2">Mingguan</a>
+                        <a href="{{ route('omzet.print.form', ['period' => 'monthly']) }}" target="_blank"
+                            class="btn btn-outline-success m-2">Bulanan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
         <div class="col-lg-6">
             <div class="card card-block card-stretch card-height">
                 <div class="card-header d-flex align-items-center justify-content-between">

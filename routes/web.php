@@ -19,6 +19,7 @@ use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Dashboard\CashierController;
 use App\Http\Controllers\Dashboard\ChartController;
+use App\Http\Controllers\Dashboard\OmzetController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -167,8 +168,9 @@ Route::middleware(['permission:roles.menu'])->group(function () {
 });
 
 //chart
-
-
 Route::get('/chart/orders', [ChartController::class, 'getOrdersChartData']);
+
+//omzet
+Route::get('/omzet/print/form', [OmzetController::class, 'print'])->name('omzet.print.form');
 
 require __DIR__ . '/auth.php';
