@@ -298,9 +298,9 @@
 });
 
 // Reload halaman setelah modal detail ditutup
-$('#detailModal').on('hidden.bs.modal', function () {
-    window.location.reload(true);
-});
+  $('#btnCloseModal').on('click', function () {
+      window.location.reload(true);
+  });
 </script>
 
 
@@ -376,7 +376,7 @@ $('#detailModal').on('hidden.bs.modal', function () {
         windows.location.reload(true);
     });
 </script>
-<script>
+{{-- <script>
     document.getElementById('printNota').addEventListener('click', function () {
     const orderId = window.lastOrderId;
 
@@ -413,6 +413,28 @@ $('#detailModal').on('hidden.bs.modal', function () {
         alert('Gagal mencetak nota.');
         console.error(err);
     });
+});
+
+</script> --}}
+<script>
+    document.getElementById('printNota').addEventListener('click', function () {
+    const orderId = window.lastOrderId;
+
+    const methodSelect = document.querySelector('select[name="method"]');
+    const cashReceived = document.getElementById('cash-received');
+
+    const pay = cashReceived ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0 : 0;
+    const method = methodSelect ? methodSelect.value : 'Tidak diketahui';
+    const change = document.getElementById('cash-change').value.replace(/[^\d]/g, '') || 0;
+
+    const params = new URLSearchParams({
+        pay: pay,
+        change: change, // atau hitung sesuai kebutuhan
+        method: method
+    }).toString();
+
+    const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
+    // print otomatis akan dipanggil oleh onload di halaman print.blade.php
 });
 
 </script>

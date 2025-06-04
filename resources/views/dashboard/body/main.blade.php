@@ -18,6 +18,9 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/css/all.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/css/regular.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/css/solid.css') }}">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
     @yield('specificpagestyles')
 </head>
 
@@ -53,6 +56,10 @@
     <script src="{{ asset('assets/vendor/fontawesome/js/fontawesome.js') }}"></script>
     <script src="{{ asset('assets/vendor/fontawesome/js/regular.js') }}"></script>
     <script src="{{ asset('assets/vendor/fontawesome/js/solid.js') }}"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    @yield('scripts')
+
 
 </body>
 

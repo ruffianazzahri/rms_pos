@@ -36,7 +36,13 @@
                 <li class="{{ Request::is('cashier*') ? 'active' : '' }}">
                     <a href="{{ route('cashier.index') }}" class="svg-icon">
                         <i class="fa-solid fa-money-bill-wave"></i>
-                        <span class="ml-3">Cashier</span>
+                        <span class="ml-3">Kasir</span>
+                    </a>
+                </li>
+                <li class="{{ Request::is('general_journal*') ? 'active' : '' }}">
+                    <a href="{{ route('general_journal.index') }}" class="svg-icon">
+                        <i class="fa-solid fa-book"></i>
+                        <span class="ml-3">laporan Keuangan</span>
                     </a>
                 </li>
 

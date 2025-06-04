@@ -20,6 +20,8 @@ use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Dashboard\CashierController;
 use App\Http\Controllers\Dashboard\ChartController;
 use App\Http\Controllers\Dashboard\OmzetController;
+use App\Http\Controllers\Dashboard\GeneralJournalController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -175,5 +177,8 @@ Route::get('/chart/orders', [ChartController::class, 'getOrdersChartData']);
 
 //omzet
 Route::get('/omzet/print/form', [OmzetController::class, 'print'])->name('omzet.print.form');
+
+//general journal
+Route::resource('general_journal', GeneralJournalController::class);
 
 require __DIR__ . '/auth.php';

@@ -145,60 +145,71 @@ class CashierController extends Controller
         return redirect()->route('cashier.index')->with('success', 'Payment deleted.');
     }
 
+    // public function printNota(Request $request, $id)
+    // {
+    //     $order = Order::with(['orderDetails.product', 'customer'])->findOrFail($id);
+
+    //     // Ambil data dari request, kalau tidak ada pakai data di database
+    //     $pay = $request->input('pay', $order->pay); // fallback ke nilai database
+    //     $change = $request->input('change', max(0, $pay - $order->total));
+    //     $method = $request->input('method', $order->payment_method ?? 'Tidak diketahui');
+
+    //     // Format tanggal
+    //     $orderDate = $order->order_date instanceof Carbon
+    //         ? $order->order_date
+    //         : Carbon::parse($order->order_date);
+
+    //     // Nota
+    //     $nota = "";
+    //     $nota .= "     RMS BATAM\n";
+    //     $nota .= "------------------------------\n";
+    //     $nota .= "Invoice  : {$order->invoice_no}\n";
+    //     $nota .= "Tanggal  : " . $orderDate->format('d-m-Y H:i') . "\n";
+
+    //     if ($order->customer) {
+    //         $nota .= "Pelanggan: {$order->customer->name}\n";
+    //     }
+
+    //     $nota .= "------------------------------\n";
+
+    //     foreach ($order->orderDetails as $item) {
+    //         $name   = $item->product->product_name;
+    //         $qty    = $item->quantity;
+    //         $price  = number_format($item->unitcost, 0, ',', '.');
+    //         $total  = number_format($item->total, 0, ',', '.');
+
+    //         $displayName = strlen($name) > 20 ? substr($name, 0, 20) . '...' : $name;
+
+    //         $nota .= "{$displayName}\n";
+    //         $nota .= "  {$qty} x Rp{$price} = Rp{$total}\n";
+    //     }
+
+    //     $nota .= "------------------------------\n";
+    //     $nota .= "Total Item : {$order->total_products}\n";
+    //     $nota .= "Total Bayar: Rp" . number_format($order->total, 0, ',', '.') . "\n";
+    //     $nota .= "Pembayaran: {$method}\n";
+    //     $nota .= "Dibayar   : Rp" . number_format($pay, 0, ',', '.') . "\n";
+
+    //     if ($change > 0) {
+    //         $nota .= "Kembalian : Rp" . number_format($change, 0, ',', '.') . "\n";
+    //     }
+
+    //     $nota .= "------------------------------\n";
+    //     $nota .= "     Terima Kasih :)\n";
+    //     $nota .= "------------------------------\n";
+
+    //     return response($nota, 200)
+    //         ->header('Content-Type', 'text/plain; charset=UTF-8');
+    // }
     public function printNota(Request $request, $id)
     {
         $order = Order::with(['orderDetails.product', 'customer'])->findOrFail($id);
 
-        // Ambil data dari request, kalau tidak ada pakai data di database
-        $pay = $request->input('pay', $order->pay); // fallback ke nilai database
+        $pay = $request->input('pay', $order->pay);
         $change = $request->input('change', max(0, $pay - $order->total));
+
         $method = $request->input('method', $order->payment_method ?? 'Tidak diketahui');
 
-        // Format tanggal
-        $orderDate = $order->order_date instanceof Carbon
-            ? $order->order_date
-            : Carbon::parse($order->order_date);
-
-        // Nota
-        $nota = "";
-        $nota .= "     RMS BATAM\n";
-        $nota .= "------------------------------\n";
-        $nota .= "Invoice  : {$order->invoice_no}\n";
-        $nota .= "Tanggal  : " . $orderDate->format('d-m-Y H:i') . "\n";
-
-        if ($order->customer) {
-            $nota .= "Pelanggan: {$order->customer->name}\n";
-        }
-
-        $nota .= "------------------------------\n";
-
-        foreach ($order->orderDetails as $item) {
-            $name   = $item->product->product_name;
-            $qty    = $item->quantity;
-            $price  = number_format($item->unitcost, 0, ',', '.');
-            $total  = number_format($item->total, 0, ',', '.');
-
-            $displayName = strlen($name) > 20 ? substr($name, 0, 20) . '...' : $name;
-
-            $nota .= "{$displayName}\n";
-            $nota .= "  {$qty} x Rp{$price} = Rp{$total}\n";
-        }
-
-        $nota .= "------------------------------\n";
-        $nota .= "Total Item : {$order->total_products}\n";
-        $nota .= "Total Bayar: Rp" . number_format($order->total, 0, ',', '.') . "\n";
-        $nota .= "Pembayaran: {$method}\n";
-        $nota .= "Dibayar   : Rp" . number_format($pay, 0, ',', '.') . "\n";
-
-        if ($change > 0) {
-            $nota .= "Kembalian : Rp" . number_format($change, 0, ',', '.') . "\n";
-        }
-
-        $nota .= "------------------------------\n";
-        $nota .= "     Terima Kasih :)\n";
-        $nota .= "------------------------------\n";
-
-        return response($nota, 200)
-            ->header('Content-Type', 'text/plain; charset=UTF-8');
+        return view('nota.print', compact('order', 'pay', 'change', 'method'));
     }
 }
