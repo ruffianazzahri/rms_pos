@@ -104,7 +104,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Konfirmasi Pembayaran</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Tutup" id="closeDetailModal">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -372,8 +372,10 @@
 </script>
 <script>
     document.getElementById('closeDetailModal').addEventListener('click', function () {
-        $('#detailModal').modal('hide');
-        windows.location.reload(true);
+        console.log(123);
+    document.activeElement.blur(); // Lepaskan focus
+    $('#detailModal').modal('hide');
+    setTimeout(() => location.reload(), 500);
     });
 </script>
 {{-- <script>

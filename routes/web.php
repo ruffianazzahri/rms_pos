@@ -5,6 +5,7 @@ use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\ProfileController;
 use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\CustomerController;
+use App\Http\Controllers\Dashboard\CustomerVipController;
 use App\Http\Controllers\Dashboard\EmployeeController;
 use App\Http\Controllers\Dashboard\SupplierController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -57,6 +58,12 @@ Route::middleware(['permission:user.menu'])->group(function () {
 Route::middleware(['permission:customer.menu'])->group(function () {
     Route::resource('/customers', CustomerController::class);
 });
+
+// ====== CUSTOMERS VIP (MEMBER CARD)======
+Route::middleware(['permission:customer.menu'])->group(function () {
+    Route::resource('/customers_vip', CustomerVipController::class)->names('customers_vip');
+});
+
 
 // ====== SUPPLIERS ======
 Route::middleware(['permission:supplier.menu'])->group(function () {

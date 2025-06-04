@@ -132,15 +132,25 @@
                     </a>
                 </li>
                 @endif
-
                 @if (auth()->user()->can('customer.menu'))
-                <li class="{{ Request::is('customers*') ? 'active' : '' }}">
+                {{-- Customers VIP --}}
+                <li class="{{ Request::is('customers_vip*') ? 'active' : '' }}">
+                    <a href="{{ route('customers_vip.index') }}" class="svg-icon">
+                        <i class="fa-solid fa-users"></i>
+                        <span class="ml-3">Customers (VIP)</span>
+                    </a>
+                </li>
+
+                {{-- Customers Biasa --}}
+                <li
+                    class="{{ (Request::is('customers') || Request::is('customers/*')) && !Request::is('customers/vip*') ? 'active' : '' }}">
                     <a href="{{ route('customers.index') }}" class="svg-icon">
                         <i class="fa-solid fa-users"></i>
                         <span class="ml-3">Customers</span>
                     </a>
                 </li>
                 @endif
+
 
                 @if (auth()->user()->can('supplier.menu'))
                 <li class="{{ Request::is('suppliers*') ? 'active' : '' }}">
