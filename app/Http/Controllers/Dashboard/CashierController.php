@@ -11,6 +11,7 @@ use App\Models\OrderDetails;
 use Illuminate\Support\Facades\DB;
 use App\Models\Customer;
 use App\Models\CustomerVip;
+use App\Models\MasterCharge;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Response;
 
@@ -19,6 +20,12 @@ class CashierController extends Controller
     public function index()
     {
         $products = Product::where('product_store', '>', 0)->get();
+
+        $restaurant_tax = MasterCharge::where('name', 'Pajak Barang dan Jasa Tertentu (PBJT) 10%')
+            ->value('percentage');
+
+        $service_charge = MasterCharge::where('name', 'Service Charge')
+            ->value('percentage');
 
         // Ambil data dari tabel customers biasa
         $regularCustomers = Customer::select('id', 'name')->get();
@@ -37,6 +44,8 @@ class CashierController extends Controller
         return view('cashier.index', [
             'products' => $products,
             'customers' => $customers,
+            'restaurant_tax' => $restaurant_tax,
+            'service_charge' => $service_charge,
         ]);
     }
 
@@ -221,9 +230,14 @@ class CashierController extends Controller
 
         $pay = $request->input('pay', $order->pay);
         $change = $request->input('change', max(0, $pay - $order->total));
-
         $method = $request->input('method', $order->payment_method ?? 'Tidak diketahui');
 
-        return view('nota.print', compact('order', 'pay', 'change', 'method'));
+        // Tambahkan jika belum disimpan di DB
+        $subtotal = $order->sub_total;
+        $vat = round($subtotal * 0.10);
+        $service = round($subtotal * 0.10);
+        $grandTotal = $subtotal + $vat + $service;
+
+        return view('nota.print', compact('order', 'pay', 'change', 'method', 'vat', 'service', 'subtotal', 'grandTotal'));
     }
 }

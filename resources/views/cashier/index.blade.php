@@ -66,7 +66,13 @@
             </thead>
             <tbody></tbody>
         </table>
-        <h5>Total: Rp <span id="total">0</span></h5>
+        <input type="hidden" id="tax-percentage" value="{{ $restaurant_tax }}">
+        <input type="hidden" id="service-percentage" value="{{ $service_charge }}">
+        <h5>Subtotal: Rp <span id="total">0</span></h5>
+        <h5>Pajak Restoran (10%): Rp <span id="tax-amount">0</span></h5>
+        <h5>Jasa Pelayanan (10%): Rp <span id="service-amount">0</span></h5>
+        <h5>Total Bayar: Rp <span id="grand-total"></span></h5>
+
 
 
 
@@ -74,12 +80,13 @@
         <form method="POST" action="{{ route('cashier.transaksi') }}" id="form-transaksi">
             @csrf
             <div class="input-group">
-                <select class="form-control" id="customer_id" name="customer_id">
-                    <option selected="" disabled="">-- Select Customer --</option>
+                <select class="form-control" id="customer_id" name="customer_id" required>
+                    <option value="" disabled selected>-- Select Customer --</option>
                     @foreach ($customers as $customer)
                     <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                     @endforeach
                 </select>
+
             </div>
 
             <input type="hidden" name="items" id="items-input">
@@ -176,6 +183,8 @@
     const cashFields = document.getElementById('cash-fields');
     const cashReceived = document.getElementById('cash-received');
     const cashChange = document.getElementById('cash-change');
+    let grandTotal = document.getElementById('grand-total');
+
 
     function toggleCashFields() {
         if (methodSelect.value === 'cash') {
@@ -189,39 +198,77 @@
 
     methodSelect.addEventListener('change', toggleCashFields);
 
-    // Jalankan saat pertama kali halaman dimuat
     document.addEventListener('DOMContentLoaded', function () {
         toggleCashFields();
     });
 
-    cashReceived.addEventListener('input', function () {
-        const received = parseFloat(this.value);
-        const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
-        const change = received - total;
-        cashChange.value = change >= 0 ? 'Rp ' + change.toLocaleString() : 'Rp 0';
-    });
+        cashReceived.addEventListener('input', function () {
+            const received = parseFloat(this.value);
 
-    document.getElementById('openConfirmModal').addEventListener('click', function () {
-        const selectedMethod = methodSelect.value;
+            // Ambil isi teks dari elemen grand total
+            const grandTotalText = document.getElementById('grand-total').innerText;
 
-        if (!selectedMethod) {
-            alert('Pilih metode pembayaran terlebih dahulu.');
-            return;
-        }
+            // Hapus karakter non-digit (seperti "Rp", titik)
+            const cleaned = grandTotalText.replace(/[^\d]/g, '');
 
-        if (selectedMethod === 'cash') {
-            const received = parseFloat(cashReceived.value || 0);
-            const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
+            // Konversi ke angka
+            const grandTotalValue = parseFloat(cleaned);
 
-            if (isNaN(received) || received < total) {
-                alert('Uang tunai kurang dari total pembayaran.');
+            // Hitung kembalian
+            const change = received - grandTotalValue;
+
+            cashChange.value = change >= 0 ? 'Rp ' + change.toLocaleString() : 'Rp 0';
+        });
+
+
+        document.getElementById('openConfirmModal').addEventListener('click', function () {
+
+            const customerSelect = document.getElementById('customer_id');
+            const customer = customerSelect.value;
+            const itemsInput = document.getElementById('items-input').value;
+            const method = document.querySelector('select[name="method"]').value;
+            const cashReceived = document.getElementById('cash-received').value;
+
+            // cek keranjang kosong
+            let isItemsEmpty = true;
+            try {
+                const items = JSON.parse(itemsInput);
+                isItemsEmpty = !items || items.length === 0;
+            } catch (e) {
+                isItemsEmpty = true;
+            }
+
+            // cek uang diterima untuk cash
+            const isCashEmpty = method === 'cash' && (!cashReceived || parseFloat(cashReceived) <= 0);
+
+            // cek customer belum dipilih (default option disabled biasanya valuenya null atau '')
+            const isCustomerEmpty = !customer;
+
+            // jika SEMUA kosong
+            if (isCustomerEmpty && isItemsEmpty && method === 'cash' && isCashEmpty) {
+                alert('Form belum diisi sama sekali! Pilih customer, tambahkan item, dan masukkan uang diterima.');
                 return;
             }
-        }
 
-        $('#confirmModal').modal('show');
-    });
+            // cek satu-satu
+            if (isCustomerEmpty) {
+                alert('Silakan pilih customer terlebih dahulu.');
+                return;
+            }
 
+            if (isItemsEmpty) {
+                alert('Keranjang belanja masih kosong. Silakan tambahkan item.');
+                return;
+            }
+
+            if (isCashEmpty) {
+                alert('Masukkan nominal uang diterima untuk metode pembayaran cash.');
+                return;
+            }
+
+            // kalau semua valid, submit form
+  	    $('#confirmModal').modal('show');
+        });
 
     document.getElementById('confirmSubmit').addEventListener('click', function () {
     const form = document.getElementById('form-transaksi');
@@ -244,16 +291,24 @@
             const uangDiterima = parseInt(document.getElementById('cash-received').value || '0');
             let kembalian = 0;
 
+            const pajak = parseInt(document.getElementById('tax-amount')?.textContent.replace(/[^\d]/g, '') || 0);
+            const jasa = parseInt(document.getElementById('service-amount')?.textContent.replace(/[^\d]/g, '') || 0);
+            const totalAkhir = order.total + pajak + jasa;
+
+
             if (method === 'cash') {
                 kembalian = uangDiterima - order.total;
             }
 
             let html = `
-                <p><strong>Invoice:</strong> ${order.invoice_no}</p>
-                <p><strong>Tanggal:</strong> ${new Date(order.order_date).toLocaleString()}</p>
-                <p><strong>Total Produk:</strong> ${order.total_products}</p>
-                <p><strong>Total Harga:</strong> Rp ${order.total.toLocaleString()}</p>
-                <p><strong>Status Pembayaran:</strong> ${order.payment_status}</p>
+            <p><strong>Invoice:</strong> ${order.invoice_no}</p>
+            <p><strong>Tanggal:</strong> ${new Date(order.order_date).toLocaleString()}</p>
+            <p><strong>Total Produk:</strong> ${order.total_products}</p>
+            <p><strong>Total Harga:</strong> Rp ${order.total.toLocaleString()}</p>
+            <p><strong>Pajak:</strong> Rp ${pajak.toLocaleString()}</p>
+            <p><strong>Jasa:</strong> Rp ${jasa.toLocaleString()}</p>
+            <p><strong>Total Akhir:</strong> Rp ${totalAkhir.toLocaleString()}</p>
+            <p><strong>Status Pembayaran:</strong> ${order.payment_status}</p>
             `;
 
             if (method === 'cash') {
@@ -356,9 +411,10 @@
 
     function renderCart() {
         cartTableBody.innerHTML = "";
-        let total = 0;
+        let subtotal = 0;
+
         cart.forEach((item, index) => {
-            total += item.subtotal;
+            subtotal += item.subtotal;
             cartTableBody.innerHTML += `
                 <tr>
                     <td>${item.name}</td>
@@ -367,7 +423,21 @@
                     <td><button onclick="removeItem(${index})">Hapus</button></td>
                 </tr>`;
         });
-        totalDisplay.innerText = total.toLocaleString();
+
+        // Ambil persen pajak dan service dari input hidden
+        const taxPercentage = parseFloat(document.getElementById("tax-percentage").value) || 0;
+        const servicePercentage = parseFloat(document.getElementById("service-percentage").value) || 0;
+
+        const taxAmount = subtotal * taxPercentage / 100;
+        const serviceAmount = subtotal * servicePercentage / 100;
+        const grandTotal = subtotal + taxAmount + serviceAmount;
+
+        // Tampilkan
+        totalDisplay.innerText = subtotal.toLocaleString();
+        document.getElementById("tax-amount").innerText = taxAmount.toLocaleString();
+        document.getElementById("service-amount").innerText = serviceAmount.toLocaleString();
+        document.getElementById("grand-total").innerText = grandTotal.toLocaleString();
+
         itemsInput.value = JSON.stringify(cart);
     }
 
@@ -389,66 +459,47 @@
     setTimeout(() => location.reload(), 500);
     });
 </script>
-{{-- <script>
-    document.getElementById('printNota').addEventListener('click', function () {
-    const orderId = window.lastOrderId;
-
-    const methodSelect = document.querySelector('select[name="method"]');
-    const cashReceived = document.getElementById('cash-received');
-    const cashChange = document.getElementById('cash-change');
-
-    const pay = cashReceived ? parseInt(cashReceived.value) || 0 : 0;
-    const change = cashChange ? parseInt(cashChange.value.replace(/[^\d]/g, '')) || 0 : 0;
-    const method = methodSelect ? methodSelect.value : 'Tidak diketahui';
-
-    const params = new URLSearchParams({
-        pay: pay,
-        change: change,
-        method: method
-    }).toString();
-
-    fetch(`/print-nota/${orderId}?${params}`, {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        }
-    })
-    .then(response => response.text())
-    .then(notaText => {
-        const win = window.open('', '', 'width=300,height=600');
-        win.document.write(`<pre>${notaText}</pre>`);
-        win.document.close();
-        win.focus();
-        win.print();
-        win.close();
-    })
-    .catch(err => {
-        alert('Gagal mencetak nota.');
-        console.error(err);
-    });
-});
-
-</script> --}}
 <script>
     document.getElementById('printNota').addEventListener('click', function () {
-    const orderId = window.lastOrderId;
+        const orderId = window.lastOrderId;
 
-    const methodSelect = document.querySelector('select[name="method"]');
-    const cashReceived = document.getElementById('cash-received');
+        const methodSelect = document.querySelector('select[name="method"]');
+        const cashReceived = document.getElementById('cash-received');
+        const changeInput = document.getElementById('cash-change');
+        const taxInput = document.getElementById('tax-amount');
+        const serviceInput = document.getElementById('service-amount');
 
-    const pay = cashReceived ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0 : 0;
-    const method = methodSelect ? methodSelect.value : 'Tidak diketahui';
-    const change = document.getElementById('cash-change').value.replace(/[^\d]/g, '') || 0;
+        // Ambil nilai dengan aman
+        const pay = cashReceived && cashReceived.value
+            ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0
+            : 0;
 
-    const params = new URLSearchParams({
-        pay: pay,
-        change: change, // atau hitung sesuai kebutuhan
-        method: method
-    }).toString();
+        const change = changeInput && changeInput.value
+            ? changeInput.value.replace(/[^\d]/g, '')
+            : 0;
 
-    const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
-    // print otomatis akan dipanggil oleh onload di halaman print.blade.php
-});
+        const tax = taxInput && taxInput.value
+            ? taxInput.value.replace(/[^\d]/g, '')
+            : 0;
 
+        const service = serviceInput && serviceInput.value
+            ? serviceInput.value.replace(/[^\d]/g, '')
+            : 0;
+
+        const method = methodSelect ? methodSelect.value : 'Tidak diketahui';
+
+        // Susun parameter URL
+        const params = new URLSearchParams({
+            pay: pay,
+            change: change,
+            method: method,
+            tax: tax,
+            service: service
+        }).toString();
+
+        // Buka jendela untuk cetak nota
+        const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
+    });
 </script>
+
 @endsection
