@@ -45,6 +45,13 @@
                         <span class="ml-3">laporan Keuangan</span>
                     </a>
                 </li>
+                <li class="{{ Request::is('master-charges*') ? 'active' : '' }}">
+                    <a href="{{ route('master-charges.index') }}" class="svg-icon">
+                        <i class="fa-solid fa-percent"></i>
+                        <span class="ml-3">Pajak / Diskon</span>
+                    </a>
+                </li>
+
 
                 @endif
 

@@ -9,6 +9,10 @@
 @section('container')
 <div class="container">
     <h2>🧾 Sistem Kasir RMS Batam</h2>
+    <p class="fw-bold">Jika salah satu produk tidak muncul, kemungkinan stok habis. Harap cek stok berkala <a
+            href="{{ route('products.index') }}" target="_blank">
+            disini.
+        </a></p>
     @if(session('success'))
     <div class="alert alert-success">
         {{ session('success') }}
@@ -34,12 +38,19 @@
             @foreach($products as $product)
             <button class="add-item" data-id="{{ $product->id }}" data-name="{{ $product->product_name }}"
                 data-price="{{ $product->selling_price }}">
+
+                {{-- Tampilkan gambar produk --}}
+                <img src="{{ asset($product->product_image) }}" alt="{{ $product->product_name }}"
+                    style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; display: block; margin: 0 auto 5px;">
+
+                {{-- Nama dan harga --}}
                 {{ $product->product_name }}<br>
                 <small>Rp {{ number_format($product->selling_price) }}</small>
             </button>
             @endforeach
         </div>
     </div>
+
 
     {{-- Keranjang --}}
     <div class="cart">

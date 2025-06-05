@@ -10,6 +10,7 @@ use App\Models\Product;
 use App\Models\OrderDetails;
 use Illuminate\Support\Facades\DB;
 use App\Models\Customer;
+use App\Models\CustomerVip;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Response;
 
@@ -18,7 +19,20 @@ class CashierController extends Controller
     public function index()
     {
         $products = Product::where('product_store', '>', 0)->get();
-        $customers = Customer::all()->sortBy('name');
+
+        // Ambil data dari tabel customers biasa
+        $regularCustomers = Customer::select('id', 'name')->get();
+
+        // Ambil data dari customers_vip dan tambahkan label
+        $vipCustomers = CustomerVip::select('id', 'name')
+            ->get()
+            ->map(function ($customer) {
+                $customer->name .= ' - MEMBER VIP';
+                return $customer;
+            });
+
+        // Gabungkan dan urutkan
+        $customers = $regularCustomers->concat($vipCustomers)->sortBy('name')->values();
 
         return view('cashier.index', [
             'products' => $products,

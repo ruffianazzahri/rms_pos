@@ -22,7 +22,7 @@ use App\Http\Controllers\Dashboard\CashierController;
 use App\Http\Controllers\Dashboard\ChartController;
 use App\Http\Controllers\Dashboard\OmzetController;
 use App\Http\Controllers\Dashboard\GeneralJournalController;
-
+use App\Http\Controllers\Dashboard\MasterChargeController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -187,5 +187,10 @@ Route::get('/omzet/print/form', [OmzetController::class, 'print'])->name('omzet.
 
 //general journal
 Route::resource('general_journal', GeneralJournalController::class);
+
+// master pajak dan diskon
+
+Route::resource('master-charges', MasterChargeController::class);
+
 
 require __DIR__ . '/auth.php';
