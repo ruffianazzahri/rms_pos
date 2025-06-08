@@ -193,5 +193,8 @@ Route::resource('general_journal', GeneralJournalController::class);
 
 Route::resource('master-charges', MasterChargeController::class);
 
+//scan member
+Route::get('/check-member/{uid}', [CustomerVipController::class, 'scan']);
+
 
 require __DIR__ . '/auth.php';

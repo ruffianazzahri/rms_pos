@@ -72,47 +72,41 @@
         <h5>Pajak Restoran (10%): Rp <span id="tax-amount">0</span></h5>
         <h5>Jasa Pelayanan (10%): Rp <span id="service-amount">0</span></h5>
         <h5>Total Bayar: Rp <span id="grand-total"></span></h5>
-
-
-
-
         {{-- Pembayaran --}}
         <form method="POST" action="{{ route('cashier.transaksi') }}" id="form-transaksi">
             @csrf
-            <div class="input-group">
-                <select class="form-control" id="customer_id" name="customer_id" required>
-                    <option value="" disabled selected>-- Select Customer --</option>
-                    @foreach ($customers as $customer)
-                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                    @endforeach
-                </select>
-
+            <div class="mb-2">
+                <label>Apakah mempunyai member?</label><br>
+                <button type="button" class="btn btn-success btn-sm" onclick="handleMember(true)">Iya</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="handleMember(false)">Tidak</button>
             </div>
 
-            <input type="hidden" name="items" id="items-input">
-
-            <label for="method">Metode Pembayaran:</label>
-            <select name="method" class="form-control" required>
-                <option value="cash" selected>Cash</option>
-                <option value="qris">QRIS</option>
-                <option value="debit">Debit</option>
-                <option value="credit">Credit</option>
-                <option value="e-wallet">E-Wallet</option>
+            <select class="form-control" id="customer_id" name="customer_id" required disabled style="display: none;">
+                <option value="" disabled selected>-- Select Customer --</option>
+                @foreach ($customers as $customer)
+                <option value="{{ $customer->id }}" data-uid="{{ $customer->uid ?? '' }}">{{ $customer->name }}</option>
+                @endforeach
             </select>
 
-            <div id="cash-fields" style="display:none;" class="mt-3">
-                <label for="cash_received">Uang Diterima (Rp):</label>
-                <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal" min="0">
-
-                <label class="mt-2">Kembalian:</label>
-                <input type="text" id="cash-change" class="form-control" readonly>
-            </div>
-
-
-            <button class="btn btn-primary mt-3" type="button" id="openConfirmModal">💰 Bayar</button>
-
-        </form>
     </div>
+    <input type="hidden" name="items" id="items-input">
+    <label for="method">Metode Pembayaran:</label>
+    <select name="method" class="form-control" required>
+        <option value="cash" selected>Cash</option>
+        <option value="qris">QRIS</option>
+        <option value="debit">Debit</option>
+        <option value="credit">Credit</option>
+        <option value="e-wallet">E-Wallet</option>
+    </select>
+    <div id="cash-fields" style="display:none;" class="mt-3">
+        <label for="cash_received">Uang Diterima (Rp):</label>
+        <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal" min="0">
+        <label class="mt-2">Kembalian:</label>
+        <input type="text" id="cash-change" class="form-control" readonly>
+    </div>
+    <button class="btn btn-primary mt-3" type="button" id="openConfirmModal">💰 Bayar</button>
+    </form>
+</div>
 </div>
 
 <!-- Modal Konfirmasi -->
@@ -157,6 +151,30 @@
         </div>
     </div>
 </div>
+<!-- Modal -->
+<div class="modal fade" id="scanMemberModal" tabindex="-1" role="dialog" aria-labelledby="scanMemberLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scanMemberLabel">Scan Kartu Member</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span> <!-- tanda silang -->
+                </button>
+            </div>
+            <div class="modal-body">
+                <label for="uidInput">Scan UID:</label>
+                <input type="text" id="uidInput" class="form-control" placeholder="Scan UID di sini">
+                <div id="memberInfo" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="scanUID()">Cari Member</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <style>
     .grid {
@@ -185,7 +203,6 @@
     const cashChange = document.getElementById('cash-change');
     let grandTotal = document.getElementById('grand-total');
 
-
     function toggleCashFields() {
         if (methodSelect.value === 'cash') {
             cashFields.style.display = 'block';
@@ -197,11 +214,9 @@
     }
 
     methodSelect.addEventListener('change', toggleCashFields);
-
     document.addEventListener('DOMContentLoaded', function () {
         toggleCashFields();
     });
-
         cashReceived.addEventListener('input', function () {
             const received = parseFloat(this.value);
 
@@ -219,8 +234,6 @@
 
             cashChange.value = change >= 0 ? 'Rp ' + change.toLocaleString() : 'Rp 0';
         });
-
-
         document.getElementById('openConfirmModal').addEventListener('click', function () {
 
             const customerSelect = document.getElementById('customer_id');
@@ -368,8 +381,6 @@
       window.location.reload(true);
   });
 </script>
-
-
 <script>
     const searchInput = document.getElementById('search-product');
 
@@ -385,7 +396,6 @@
         });
     });
 </script>
-
 <script>
     const cart = [];
     const cartTableBody = document.querySelector("#cart-table tbody");
@@ -501,5 +511,67 @@
         const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
     });
 </script>
+<script>
+    function handleMember(isMember) {
+    const select = document.getElementById('customer_id');
+    select.disabled = false;
+    select.style.display = 'block'; // tampilkan select
+    document.getElementById('memberInfo').innerHTML = '';
 
+    if (isMember) {
+        // Tampilkan modal untuk scan UID
+        var myModal = new bootstrap.Modal(document.getElementById('scanMemberModal'));
+        myModal.show();
+    } else {
+        // Pilih customer umum, disable select
+        for (const option of select.options) {
+            if (option.text.toLowerCase().includes('umum')) {
+                option.selected = true;
+                break;
+            }
+        }
+        select.disabled = true;
+    }
+}
+
+</script>
+<script>
+    function scanUID() {
+    const uid = document.getElementById('uidInput').value.trim();
+    if (uid === "") {
+        alert("UID tidak boleh kosong.");
+        return;
+    }
+
+    fetch(`/check-member/${uid}`)
+        .then(response => response.json())
+        .then(data => {
+
+            const select = document.getElementById('customer_id');
+            if (data.success) {
+                // Set nama member di select option
+                for (const option of select.options) {
+                    if (option.value == data.member.id) {
+                        option.selected = true;
+                        select.disabled = true;
+                        break;
+                    }
+                }
+
+                document.getElementById('memberInfo').innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>${data.member.name}</strong><br>
+                        Saldo: Rp${data.member.balance.toLocaleString()}
+                    </div>`;
+            } else {
+                document.getElementById('memberInfo').innerHTML = `
+                    <div class="alert alert-danger">Member dengan UID <strong>${uid}</strong> tidak ditemukan.</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mencari member.');
+        });
+}
+</script>
 @endsection
