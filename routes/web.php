@@ -61,6 +61,7 @@ Route::middleware(['permission:customer.menu'])->group(function () {
 
 // ====== CUSTOMERS VIP (MEMBER CARD)======
 Route::middleware(['permission:customer.menu'])->group(function () {
+    Route::get('/customers_vip/scan', [CustomerVipController::class, 'scan'])->name('customers_vip.scan');
     Route::resource('/customers_vip', CustomerVipController::class)->names('customers_vip');
 });
 

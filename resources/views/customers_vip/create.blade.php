@@ -76,6 +76,12 @@
                                     Scan Kartu Member
                                 </button>
                             </div>
+                            <div class="form-group">
+                                <label for="balance">Balance (Rp):</label>
+                                <input type="number" name="balance" class="form-control" min="0" step="0.01"
+                                    value="{{ old('balance', $customer->balance ?? 0) }}" required>
+                            </div>
+
                         </div>
                         <!-- end: Input Data -->
                         <div class="mt-2">

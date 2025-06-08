@@ -19,8 +19,10 @@ class CustomerVip extends Model
         'phone',
         'address',
         'city',
-        'uid'
+        'uid',
+        'balance' // ← added
     ];
+
     public $sortable = [
         'name',
         'phone',

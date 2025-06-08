@@ -42,10 +42,11 @@ class CustomerVipController extends Controller
     {
         $rules = [
             'name' => 'required|string|max:50',
-            'phone' => 'required|string|max:15|unique:customers,phone',
+            'phone' => 'required|string|max:15|unique:customers_vip,phone',
             'city' => 'required|string|max:50',
             'address' => 'required|string|max:100',
             'uid' => 'required|string|max:100|unique:customers_vip,uid',
+            'balance' => 'required|numeric|min:0', // added
         ];
 
         $validatedData = $request->validate($rules);
@@ -59,11 +60,13 @@ class CustomerVipController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(CustomerVip $customer)
+    public function show($id)
     {
-        return view('customers_vip.show', [
-            'customer' => $customer,
-        ]);
+        $customer = CustomerVip::find($id);
+        if (!$customer) {
+            abort(404);
+        }
+        return view('customers_vip.show', compact('customer'));
     }
 
     /**
@@ -77,30 +80,39 @@ class CustomerVipController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Show the form for editing the specified resource.
      */
-    public function update(Request $request, CustomerVip $customer)
+    public function update(Request $request, CustomerVip $customers_vip)
     {
-
-        //dd($customer);
-
         $rules = [
-            'photo' => 'nullable|image|file|max:1024',
             'name' => 'required|string|max:50',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:20|unique:customers_vip,phone,' . $customers_vip->id,
             'city' => 'required|string|max:50',
             'address' => 'required|string|max:100',
-            'uid' => 'required|string|max:100|unique:customers_vip,uid,' . $customer->id,
+            'balance' => 'required|numeric|min:0',
         ];
 
-        $validatedData = $request->validate($rules);
+        // Tambahkan validasi uid_new jika diisi
+        if ($request->filled('uid_new')) {
+            $rules['uid_new'] = 'string|max:100|unique:customers_vip,uid,' . $customers_vip->id;
+        }
 
-        // Debug isi validated data
-        //dd($validatedData);
+        $validated = $request->validate($rules);
 
-        $customer->update($validatedData);
+        $customers_vip->name = $validated['name'];
+        $customers_vip->phone = $validated['phone'];
+        $customers_vip->city = $validated['city'];
+        $customers_vip->address = $validated['address'];
+        $customers_vip->balance = $validated['balance'];
 
-        return redirect()->route('customers_vip.index')->with('success', 'Customer berhasil diperbarui!');
+        // Ganti UID jika user mengisi uid baru
+        if ($request->filled('uid_new')) {
+            $customers_vip->uid = $validated['uid_new'];
+        }
+
+        $customers_vip->save();
+
+        return redirect()->route('customers_vip.index')->with('success', 'Customer updated successfully!');
     }
 
     /**
@@ -120,6 +132,30 @@ class CustomerVipController extends Controller
             return Redirect::route('customers_vip.index')->with('success', 'Customer berhasil dihapus!');
         } else {
             return Redirect::route('customers_vip.index')->with('error', 'Gagal menghapus customer!');
+        }
+    }
+
+    // app/Http/Controllers/CustomerVipController.php
+
+    public function scan(Request $request)
+    {
+        $uid = $request->input('uid');
+        $customer = CustomerVip::where('uid', $uid)->first();
+
+        if ($customer) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $customer->id,
+                    'nama' => $customer->name,
+                    'saldo' => $customer->balance,
+                ]
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'UID tidak ditemukan.'
+            ]);
         }
     }
 }

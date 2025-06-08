@@ -16,7 +16,7 @@
                         method="POST">
 
                         @csrf
-                        @method('put')
+                        @method('PUT')
                         <!-- begin: Input Data -->
                         <div class=" row align-items-center">
                             <div class="form-group col-md-6">
@@ -74,6 +74,12 @@
                                 <div class="text-danger small">{{ $message }}</div>
                                 @enderror
                             </div>
+                            <div class="form-group">
+                                <label for="balance">Balance (Rp):</label>
+                                <input type="number" name="balance" class="form-control" min="0" step="0.01"
+                                    value="{{ old('balance', $customer->balance ?? 0) }}" required>
+                            </div>
+
 
 
                         </div>
@@ -102,7 +108,8 @@
                                         </div>
                                         <div class="form-group">
                                             <label for="uid_new">UID Baru</label>
-                                            <input type="text" id="uid_new" class="form-control" required>
+                                            <input type="text" name="uid_new" id="uid_new" class="form-control">
+
                                         </div>
                                     </div>
 

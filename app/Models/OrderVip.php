@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Kyslik\ColumnSortable\Sortable;
 
-class Order extends Model
+class OrderVip extends Model
 {
     use HasFactory, Sortable;
+
+    protected $table = 'orders_vip';
 
     protected $fillable = [
         'customer_id',
