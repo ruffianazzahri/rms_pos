@@ -11,6 +11,10 @@ class Customer extends Model
 {
     use HasFactory, Sortable;
 
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
     protected $fillable = [
         'name',
         'email',

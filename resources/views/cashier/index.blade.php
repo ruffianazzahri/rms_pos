@@ -81,12 +81,13 @@
                 <button type="button" class="btn btn-secondary btn-sm" onclick="handleMember(false)">Tidak</button>
             </div>
 
-            <select class="form-control" id="customer_id" name="customer_id" required disabled style="display: none;">
-                <option value="" disabled selected>-- Select Customer --</option>
+            <select class="form-control" id="customer_id" name="customer_id" required style="display: block;">
+                <option value="" readonly selected>-- Select Customer --</option>
                 @foreach ($customers as $customer)
-                <option value="{{ $customer->id }}" data-uid="{{ $customer->uid ?? '' }}">{{ $customer->name }}</option>
+                <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
                 @endforeach
             </select>
+
 
     </div>
     <input type="hidden" name="items" id="items-input">
@@ -234,6 +235,7 @@
 
             cashChange.value = change >= 0 ? 'Rp ' + change.toLocaleString() : 'Rp 0';
         });
+
         document.getElementById('openConfirmModal').addEventListener('click', function () {
 
             const customerSelect = document.getElementById('customer_id');
@@ -306,8 +308,14 @@
 
             const pajak = parseInt(document.getElementById('tax-amount')?.textContent.replace(/[^\d]/g, '') || 0);
             const jasa = parseInt(document.getElementById('service-amount')?.textContent.replace(/[^\d]/g, '') || 0);
-            const totalAkhir = order.total + pajak + jasa;
 
+                if (typeof order.total === 'undefined') {
+                    console.error('order.total tidak tersedia di response:', order);
+                    alert('Data transaksi tidak lengkap (total).');
+                    return;
+                }
+
+            const totalAkhir = order.total + pajak + jasa;
 
             if (method === 'cash') {
                 kembalian = uangDiterima - order.total;
@@ -366,15 +374,15 @@
 
             document.getElementById('detailModalBody').innerHTML = html;
             $('#detailModal').modal('show');
-              window.lastOrderId = order.id; // <- Simpan ID order secara global
+              window.lastOrderId = order.id;
         }
     })
 
-    .catch(err => {
-        console.error(err);
-        alert('Terjadi kesalahan.');
+        .catch(err => {
+            console.error(err);
+            alert('Terjadi kesalahan.');
+        });
     });
-});
 
 // Reload halaman setelah modal detail ditutup
   $('#btnCloseModal').on('click', function () {
@@ -519,19 +527,25 @@
     document.getElementById('memberInfo').innerHTML = '';
 
     if (isMember) {
-        // Tampilkan modal untuk scan UID
+        select.disabled = false;
+        select.style.pointerEvents = 'auto';
+        select.style.backgroundColor = '';
+        // Tampilkan modal scan
         var myModal = new bootstrap.Modal(document.getElementById('scanMemberModal'));
         myModal.show();
     } else {
-        // Pilih customer umum, disable select
+        // Pilih customer umum
         for (const option of select.options) {
             if (option.text.toLowerCase().includes('umum')) {
                 option.selected = true;
                 break;
             }
         }
-        select.disabled = true;
+        select.disabled = false; // jangan disable
+        select.style.pointerEvents = 'none';
+        select.style.backgroundColor = '#e9ecef';
     }
+
 }
 
 </script>

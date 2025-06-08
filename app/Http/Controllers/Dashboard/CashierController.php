@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\Order;
+use App\Models\OrderDetails;
+use App\Models\OrderVip;
+use App\Models\OrderVipDetails;
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\OrderDetails;
+
 use Illuminate\Support\Facades\DB;
 use App\Models\Customer;
 use App\Models\CustomerVip;
@@ -58,12 +61,15 @@ class CashierController extends Controller
 
     public function store(Request $request)
     {
+        $customerId = $request->customer_id;
+
         $request->validate([
             'items' => 'required|json',
             'method' => 'required|in:cash,qris,debit,credit,e-wallet',
         ]);
 
         $items = json_decode($request->items, true);
+
 
         if (empty($items)) {
             return response()->json(['error' => 'Keranjang kosong!'], 422);
@@ -72,50 +78,98 @@ class CashierController extends Controller
         DB::beginTransaction();
         try {
             $subTotal = array_sum(array_column($items, 'subtotal'));
+            $totalQty = array_sum(array_column($items, 'qty'));
 
-            $order = Order::create([
-                'customer_id'    => $request->customer_id,
-                'order_date'     => Carbon::now('Asia/Jakarta'),
-                'order_status'   => 'completed',
-                'total_products' => array_sum(array_column($items, 'qty')),
-                'sub_total'      => $subTotal,
-                'vat'            => 0,
-                'invoice_no'     => 'INV-' . time(),
-                'total'          => $subTotal,
-                'payment_status' => 'paid',
-                'pay'            => $subTotal,
-                'due'            => 0,
-            ]);
+            $isVip = CustomerVip::where('id', $customerId)->exists();
 
-            foreach ($items as $item) {
-                $product = Product::findOrFail($item['id']);
+            if ($isVip) {
+                // ==>>> PELANGGAN VIP
+                $vip = CustomerVip::findOrFail($customerId);
 
-                // Cek apakah stok cukup
-                if ($product->product_store < $item['qty']) {
-                    throw new \Exception("Stok untuk produk '{$product->product_name}' tidak cukup.");
+                // Cek saldo cukup
+                if ($vip->balance < $subTotal) {
+                    throw new \Exception('Saldo member tidak mencukupi.');
                 }
 
-                // Kurangi stok
-                $product->product_store -= $item['qty'];
-                $product->save();
+                $order = OrderVip::create([
+                    'customer_id'    => $customerId,
+                    'order_date'     => Carbon::now('Asia/Jakarta'),
+                    'order_status'   => 'completed',
+                    'total_products' => $totalQty,
+                    'sub_total'      => $subTotal,
+                    'vat'            => 0,
+                    'invoice_no'     => 'INV-' . time(),
+                    'total'          => $subTotal,
+                    'payment_status' => 'paid',
+                    'pay'            => $subTotal,
+                    'due'            => 0,
+                ]);
 
-                // Simpan detail pesanan
-                OrderDetails::create([
-                    'order_id'   => $order->id,
-                    'product_id' => $item['id'],
-                    'quantity'   => $item['qty'],
-                    'unitcost'   => $item['price'],
-                    'total'      => $item['subtotal'],
+                foreach ($items as $item) {
+                    $product = Product::findOrFail($item['id']);
+
+                    if ($product->product_store < $item['qty']) {
+                        throw new \Exception("Stok tidak cukup untuk {$product->product_name}.");
+                    }
+
+                    $product->decrement('product_store', $item['qty']);
+
+                    OrderVipDetails::create([
+                        'order_id'   => $order->id,
+                        'product_id' => $item['id'],
+                        'quantity'   => $item['qty'],
+                        'unitcost'   => $item['price'],
+                        'total'      => $item['subtotal'],
+                    ]);
+                }
+
+                $vip->decrement('balance', $subTotal); // Kurangi saldo VIP
+
+            } else {
+                // ==>>> PELANGGAN UMUM
+                $order = Order::create([
+                    'customer_id'    => $customerId,
+                    'order_date'     => Carbon::now('Asia/Jakarta'),
+                    'order_status'   => 'completed',
+                    'total_products' => $totalQty,
+                    'sub_total'      => $subTotal,
+                    'vat'            => 0,
+                    'invoice_no'     => 'INV-' . time(),
+                    'total'          => $subTotal,
+                    'payment_status' => 'paid',
+                    'pay'            => $subTotal,
+                    'due'            => 0,
+                ]);
+
+                // /dd($customerId);
+
+
+                foreach ($items as $item) {
+                    $product = Product::findOrFail($item['id']);
+
+                    if ($product->product_store < $item['qty']) {
+                        throw new \Exception("Stok tidak cukup untuk {$product->product_name}.");
+                    }
+
+                    $product->decrement('product_store', $item['qty']);
+
+                    OrderDetails::create([
+                        'order_id'   => $order->id,
+                        'product_id' => $item['id'],
+                        'quantity'   => $item['qty'],
+                        'unitcost'   => $item['price'],
+                        'total'      => $item['subtotal'],
+                    ]);
+                }
+
+                Payment::create([
+                    'order_id' => $order->id,
+                    'method'   => $request->method,
+                    'amount'   => $subTotal,
+                    'status'   => 'paid',
+                    'paid_at'  => Carbon::now('Asia/Jakarta'),
                 ]);
             }
-
-            Payment::create([
-                'order_id' => $order->id,
-                'method'   => $request->method,
-                'amount'   => $subTotal,
-                'status'   => 'paid',
-                'paid_at'  => Carbon::now('Asia/Jakarta'),
-            ]);
 
             DB::commit();
 
@@ -126,10 +180,11 @@ class CashierController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Gagal menyimpan transaksi: ' . $e->getMessage()], 500);
+            return response()->json([
+                'error' => 'Gagal menyimpan transaksi: ' . $e->getMessage()
+            ], 500);
         }
     }
-
 
     public function show(Payment $payment)
     {

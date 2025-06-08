@@ -12,6 +12,10 @@ class CustomerVip extends Model
 
     protected $table = 'customers_vip';
 
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
     use HasFactory, Sortable;
 
     protected $fillable = [
