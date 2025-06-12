@@ -10,7 +10,7 @@ use App\Models\OrderVip;
 use App\Models\OrderVipDetails;
 use Illuminate\Http\Request;
 use App\Models\Product;
-
+use App\Models\PaymentMethod;
 use Illuminate\Support\Facades\DB;
 use App\Models\Customer;
 use App\Models\CustomerVip;
@@ -33,6 +33,11 @@ class CashierController extends Controller
         // Ambil data dari tabel customers biasa
         $regularCustomers = Customer::select('id', 'name')->get();
 
+        $paymentMethod = PaymentMethod::select('id', 'method_name')->get();
+
+        //dd($paymentMethod);
+
+
         // Ambil data dari customers_vip dan tambahkan label
         $vipCustomers = CustomerVip::select('id', 'name')
             ->get()
@@ -49,6 +54,7 @@ class CashierController extends Controller
             'customers' => $customers,
             'restaurant_tax' => $restaurant_tax,
             'service_charge' => $service_charge,
+            'method' => $paymentMethod,
         ]);
     }
 
