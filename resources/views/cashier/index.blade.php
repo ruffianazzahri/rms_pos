@@ -220,8 +220,6 @@
     });
         cashReceived.addEventListener('input', function () {
             const received = parseFloat(this.value);
-
-            // Ambil isi teks dari elemen grand total
             const grandTotalText = document.getElementById('grand-total').innerText;
 
             // Hapus karakter non-digit (seperti "Rp", titik)
