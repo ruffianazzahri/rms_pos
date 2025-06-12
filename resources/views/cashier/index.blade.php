@@ -77,11 +77,12 @@
             @csrf
             <div class="mb-2">
                 <label>Apakah mempunyai member?</label><br>
-                <button type="button" class="btn btn-success btn-sm" onclick="handleMember(true)">Iya</button>
+                <button type="button" class="btn btn-success btn-sm"
+                    onclick="alert('Fitur ini segera hadir!')">Iya</button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="handleMember(false)">Tidak</button>
             </div>
 
-            <select class="form-control" id="customer_id" name="customer_id" required style="display: block;">
+            <select class="form-control" id="customer_id" name="customer_id" required style="display: none;">
                 <option value="" readonly selected>-- Select Customer --</option>
                 @foreach ($customers as $customer)
                 <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
@@ -521,7 +522,7 @@
     function handleMember(isMember) {
     const select = document.getElementById('customer_id');
     select.disabled = false;
-    select.style.display = 'block'; // tampilkan select
+    select.style.display = 'none'; // tampilkan select
     document.getElementById('memberInfo').innerHTML = '';
 
     if (isMember) {
@@ -530,6 +531,7 @@
         select.style.backgroundColor = '';
         // Tampilkan modal scan
         var myModal = new bootstrap.Modal(document.getElementById('scanMemberModal'));
+            select.style.display = 'block'; // tampilkan select
         myModal.show();
     } else {
         // Pilih customer umum
@@ -542,6 +544,7 @@
         select.disabled = false; // jangan disable
         select.style.pointerEvents = 'none';
         select.style.backgroundColor = '#e9ecef';
+            select.style.display = 'block'; // tampilkan select
     }
 
 }
