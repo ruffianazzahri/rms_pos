@@ -50,6 +50,6 @@ class OrderVip extends Model
 
     public function orderDetails()
     {
-        return $this->hasMany(OrderDetails::class);
+        return $this->hasMany(OrderVipDetails::class, 'order_id');
     }
 }

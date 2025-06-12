@@ -81,33 +81,36 @@
                 <button type="button" class="btn btn-secondary btn-sm" onclick="handleMember(false)">Tidak</button>
             </div>
 
-            <select class="form-control" id="customer_id" name="customer_id" required style="display: block;">
+            <select class="form-control" id="customer_id" name="customer_id" required style="display: none;">
                 <option value="" readonly selected>-- Select Customer --</option>
                 @foreach ($customers as $customer)
                 <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
                 @endforeach
             </select>
 
+            <input type="hidden" name="items" id="items-input">
+            <label for="method">Metode Pembayaran:</label>
+            <select name="method" class="form-control" required>
+                @foreach($payment_methods as $method)
+                <option value="{{ $method }}">{{ $method }}</option>
+                @endforeach
+            </select>
 
+            <div id="cash-fields" style="display:none;" class="mt-3">
+                <label for="cash_received">Uang Diterima (Rp):</label>
+                <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal" min="0">
+                <label class="mt-2">Kembalian:</label>
+                <input type="text" id="cash-change" class="form-control" readonly>
+            </div>
+
+            <div id="membershipBalanceGroup" class="form-group" style="display: none;">
+                <label for="membershipBalance">Sisa Saldo Membership</label>
+                <input type="text" class="form-control" id="membershipBalance" readonly>
+            </div>
+
+            <button class="btn btn-primary mt-3" type="button" id="openConfirmModal">💰 Bayar</button>
+        </form>
     </div>
-    <input type="hidden" name="items" id="items-input">
-    <label for="method">Metode Pembayaran:</label>
-    <select name="method" class="form-control" required>
-        <option value="cash" selected>Cash</option>
-        <option value="qris">QRIS</option>
-        <option value="debit">Debit</option>
-        <option value="credit">Credit</option>
-        <option value="e-wallet">E-Wallet</option>
-    </select>
-    <div id="cash-fields" style="display:none;" class="mt-3">
-        <label for="cash_received">Uang Diterima (Rp):</label>
-        <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal" min="0">
-        <label class="mt-2">Kembalian:</label>
-        <input type="text" id="cash-change" class="form-control" readonly>
-    </div>
-    <button class="btn btn-primary mt-3" type="button" id="openConfirmModal">💰 Bayar</button>
-    </form>
-</div>
 </div>
 
 <!-- Modal Konfirmasi -->
@@ -184,6 +187,7 @@
         gap: 1rem;
     }
 
+
     .add-item {
         padding: 1rem;
         background: #f1f1f1;
@@ -198,26 +202,282 @@
 </style>
 
 <script>
+    const searchInput = document.getElementById('search-product');
+
+    searchInput.addEventListener('input', function () {
+        const keyword = this.value.toLowerCase();
+        document.querySelectorAll('.add-item').forEach(button => {
+            const name = button.dataset.name.toLowerCase();
+            if (name.includes(keyword)) {
+                button.style.display = '';
+            } else {
+                button.style.display = 'none';
+            }
+        });
+    });
+</script>
+<script>
+    const cart = [];
+    const cartTableBody = document.querySelector("#cart-table tbody");
+    const totalDisplay = document.getElementById("total");
+    const itemsInput = document.getElementById("items-input");
+
+    document.querySelectorAll(".add-item").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const id = btn.dataset.id;
+            const name = btn.dataset.name;
+            const price = parseFloat(btn.dataset.price);
+
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                existing.qty++;
+                existing.subtotal = existing.qty * price;
+            } else {
+                cart.push({ id, name, qty: 1, price, subtotal: price });
+            }
+            renderCart();
+        });
+    });
+
+    function renderCart() {
+        cartTableBody.innerHTML = "";
+        let subtotal = 0;
+
+        cart.forEach((item, index) => {
+            subtotal += item.subtotal;
+            cartTableBody.innerHTML += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.qty}</td>
+                    <td>Rp ${item.subtotal.toLocaleString()}</td>
+                    <td><button onclick="removeItem(${index})">Hapus</button></td>
+                </tr>`;
+        });
+
+        // Ambil persen pajak dan service dari input hidden
+        const taxPercentage = parseFloat(document.getElementById("tax-percentage").value) || 0;
+        const servicePercentage = parseFloat(document.getElementById("service-percentage").value) || 0;
+
+        const taxAmount = subtotal * taxPercentage / 100;
+        const serviceAmount = subtotal * servicePercentage / 100;
+        const grandTotal = subtotal + taxAmount + serviceAmount;
+
+        // Tampilkan
+        totalDisplay.innerText = subtotal.toLocaleString();
+        document.getElementById("tax-amount").innerText = taxAmount.toLocaleString();
+        document.getElementById("service-amount").innerText = serviceAmount.toLocaleString();
+        document.getElementById("grand-total").innerText = grandTotal.toLocaleString();
+
+        itemsInput.value = JSON.stringify(cart);
+    }
+
+    function removeItem(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+</script>
+<script>
+    document.getElementById('form-transaksi').addEventListener('submit', function(e) {
+    e.preventDefault(); // penting!
+});
+</script>
+<script>
+    document.getElementById('closeDetailModal').addEventListener('click', function () {
+        console.log(123);
+    document.activeElement.blur(); // Lepaskan focus
+    $('#detailModal').modal('hide');
+    setTimeout(() => location.reload(), 500);
+    });
+</script>
+<script>
+    document.getElementById('printNota').addEventListener('click', function () {
+        const orderId = window.lastOrderId;
+
+        const methodSelect = document.querySelector('select[name="method"]');
+        const cashReceived = document.getElementById('cash-received');
+        const changeInput = document.getElementById('cash-change');
+        const taxInput = document.getElementById('tax-amount');
+        const serviceInput = document.getElementById('service-amount');
+
+        // Ambil nilai dengan aman
+        const pay = cashReceived && cashReceived.value
+            ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0
+            : 0;
+
+        const change = changeInput && changeInput.value
+            ? changeInput.value.replace(/[^\d]/g, '')
+            : 0;
+
+        const tax = taxInput && taxInput.value
+            ? taxInput.value.replace(/[^\d]/g, '')
+            : 0;
+
+        const service = serviceInput && serviceInput.value
+            ? serviceInput.value.replace(/[^\d]/g, '')
+            : 0;
+
+        const method = methodSelect ? methodSelect.value : 'Tidak diketahui';
+
+        // Susun parameter URL
+        const params = new URLSearchParams({
+            pay: pay,
+            change: change,
+            method: method,
+            tax: tax,
+            service: service
+        }).toString();
+
+        // Buka jendela untuk cetak nota
+        const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
+    });
+</script>
+<script>
+    function handleMember(isMember) {
+    const select = document.getElementById('customer_id');
+    select.disabled = false;
+
+    document.getElementById('memberInfo').innerHTML = '';
+
+    if (isMember) {
+        select.disabled = false;
+        select.style.pointerEvents = 'auto';
+        select.style.backgroundColor = '';
+        // Tampilkan modal scan
+        var myModal = new bootstrap.Modal(document.getElementById('scanMemberModal'));
+        myModal.show();
+    } else {
+        // Pilih customer umum
+        for (const option of select.options) {
+            if (option.text.toLowerCase().includes('umum')) {
+                option.selected = true;
+                break;
+            }
+        }
+        select.disabled = false; // jangan disable
+        select.style.pointerEvents = 'none';
+        select.style.backgroundColor = '#e9ecef';
+        select.style.display = 'block'; // tampilkan select
+    }
+
+}
+
+</script>
+<script>
+    function scanUID() {
+    const uid = document.getElementById('uidInput').value.trim();
+    const select = document.getElementById('customer_id');
+    const methodSelect = document.querySelector('select[name="method"]');
+    const membershipBalance = document.getElementById('membershipBalance');
+    const membershipBalanceGroup = document.getElementById('membershipBalanceGroup');
+
+    select.disabled = false;
+
+    if (uid === "") {
+        alert("UID tidak boleh kosong.");
+        return;
+    }
+
+    fetch(`/check-member/${uid}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Set customer member terpilih
+                for (const option of select.options) {
+                    if (option.value == data.member.id) {
+                        option.selected = true;
+                        select.disabled = true;
+                        break;
+                    }
+                }
+
+                // Set metode pembayaran ke "membership card"
+                for (const option of methodSelect.options) {
+                    if (option.value.toLowerCase() === 'membership card') {
+                        methodSelect.value = option.value;
+                        methodSelect.disabled = true;
+                        break;
+                    }
+                }
+
+                // Panggil toggle untuk menyesuaikan field lainnya
+                toggleCashFields();
+
+                // Tampilkan info saldo
+                document.getElementById('memberInfo').innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>${data.member.name}</strong><br>
+                        Saldo: Rp${data.member.balance.toLocaleString()}
+                    </div>`;
+
+                // Set ke input saldo
+                membershipBalance.value = `Rp${data.member.balance.toLocaleString()}`;
+                membershipBalanceGroup.style.display = 'block';
+            } else {
+                document.getElementById('memberInfo').innerHTML = `
+                    <div class="alert alert-danger">Member dengan UID <strong>${uid}</strong> tidak ditemukan.</div>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mencari member.');
+        });
+}
+
+</script>
+<script>
+    document.querySelector('select[name="method"]').addEventListener('change', function () {
+    const method = this.value.toLowerCase();
+    const balanceGroup = document.getElementById('membershipBalanceGroup');
+    const changeGroup = document.getElementById('changeGroup');
+
+    if (method === 'membership card') {
+        balanceGroup.style.display = 'block';
+        changeGroup.style.display = 'none';
+    } else {
+        balanceGroup.style.display = 'none';
+        changeGroup.style.display = 'block';
+
+        // Jika sebelumnya member, reset form
+        document.getElementById('customer_id').disabled = false;
+        document.querySelector('select[name="method"]').disabled = false;
+        document.getElementById('memberInfo').innerHTML = '';
+        document.getElementById('membershipBalance').value = '';
+    }
+});
+
+</script>
+<script>
     const methodSelect = document.querySelector('select[name="method"]');
     const cashFields = document.getElementById('cash-fields');
     const cashReceived = document.getElementById('cash-received');
     const cashChange = document.getElementById('cash-change');
+    const membershipBalanceGroup = document.getElementById('membershipBalanceGroup');
+    const membershipBalance = document.getElementById('membershipBalance');
     let grandTotal = document.getElementById('grand-total');
 
     function toggleCashFields() {
-        if (methodSelect.value === 'cash') {
+        const selected = methodSelect.value.toLowerCase();
+        if (selected === 'cash') {
             cashFields.style.display = 'block';
+            membershipBalanceGroup.style.display = 'none';
+        } else if (selected === 'membership card') {
+            cashFields.style.display = 'none';
+            membershipBalanceGroup.style.display = 'block';
         } else {
             cashFields.style.display = 'none';
-            cashReceived.value = '';
-            cashChange.value = '';
+            membershipBalanceGroup.style.display = 'none';
         }
+
+        cashReceived.value = '';
+        cashChange.value = '';
+        cashChange.style.display = 'none';
     }
 
     methodSelect.addEventListener('change', toggleCashFields);
     document.addEventListener('DOMContentLoaded', function () {
         toggleCashFields();
     });
+
         cashReceived.addEventListener('input', function () {
             const received = parseFloat(this.value);
 
@@ -388,204 +648,5 @@
   $('#btnCloseModal').on('click', function () {
       window.location.reload(true);
   });
-</script>
-<script>
-    const searchInput = document.getElementById('search-product');
-
-    searchInput.addEventListener('input', function () {
-        const keyword = this.value.toLowerCase();
-        document.querySelectorAll('.add-item').forEach(button => {
-            const name = button.dataset.name.toLowerCase();
-            if (name.includes(keyword)) {
-                button.style.display = '';
-            } else {
-                button.style.display = 'none';
-            }
-        });
-    });
-</script>
-<script>
-    const cart = [];
-    const cartTableBody = document.querySelector("#cart-table tbody");
-    const totalDisplay = document.getElementById("total");
-    const itemsInput = document.getElementById("items-input");
-
-    document.querySelectorAll(".add-item").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const id = btn.dataset.id;
-            const name = btn.dataset.name;
-            const price = parseFloat(btn.dataset.price);
-
-            const existing = cart.find(item => item.id === id);
-            if (existing) {
-                existing.qty++;
-                existing.subtotal = existing.qty * price;
-            } else {
-                cart.push({ id, name, qty: 1, price, subtotal: price });
-            }
-            renderCart();
-        });
-    });
-
-    function renderCart() {
-        cartTableBody.innerHTML = "";
-        let subtotal = 0;
-
-        cart.forEach((item, index) => {
-            subtotal += item.subtotal;
-            cartTableBody.innerHTML += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>${item.qty}</td>
-                    <td>Rp ${item.subtotal.toLocaleString()}</td>
-                    <td><button onclick="removeItem(${index})">Hapus</button></td>
-                </tr>`;
-        });
-
-        // Ambil persen pajak dan service dari input hidden
-        const taxPercentage = parseFloat(document.getElementById("tax-percentage").value) || 0;
-        const servicePercentage = parseFloat(document.getElementById("service-percentage").value) || 0;
-
-        const taxAmount = subtotal * taxPercentage / 100;
-        const serviceAmount = subtotal * servicePercentage / 100;
-        const grandTotal = subtotal + taxAmount + serviceAmount;
-
-        // Tampilkan
-        totalDisplay.innerText = subtotal.toLocaleString();
-        document.getElementById("tax-amount").innerText = taxAmount.toLocaleString();
-        document.getElementById("service-amount").innerText = serviceAmount.toLocaleString();
-        document.getElementById("grand-total").innerText = grandTotal.toLocaleString();
-
-        itemsInput.value = JSON.stringify(cart);
-    }
-
-    function removeItem(index) {
-        cart.splice(index, 1);
-        renderCart();
-    }
-</script>
-<script>
-    document.getElementById('form-transaksi').addEventListener('submit', function(e) {
-    e.preventDefault(); // penting!
-});
-</script>
-<script>
-    document.getElementById('closeDetailModal').addEventListener('click', function () {
-        console.log(123);
-    document.activeElement.blur(); // Lepaskan focus
-    $('#detailModal').modal('hide');
-    setTimeout(() => location.reload(), 500);
-    });
-</script>
-<script>
-    document.getElementById('printNota').addEventListener('click', function () {
-        const orderId = window.lastOrderId;
-
-        const methodSelect = document.querySelector('select[name="method"]');
-        const cashReceived = document.getElementById('cash-received');
-        const changeInput = document.getElementById('cash-change');
-        const taxInput = document.getElementById('tax-amount');
-        const serviceInput = document.getElementById('service-amount');
-
-        // Ambil nilai dengan aman
-        const pay = cashReceived && cashReceived.value
-            ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0
-            : 0;
-
-        const change = changeInput && changeInput.value
-            ? changeInput.value.replace(/[^\d]/g, '')
-            : 0;
-
-        const tax = taxInput && taxInput.value
-            ? taxInput.value.replace(/[^\d]/g, '')
-            : 0;
-
-        const service = serviceInput && serviceInput.value
-            ? serviceInput.value.replace(/[^\d]/g, '')
-            : 0;
-
-        const method = methodSelect ? methodSelect.value : 'Tidak diketahui';
-
-        // Susun parameter URL
-        const params = new URLSearchParams({
-            pay: pay,
-            change: change,
-            method: method,
-            tax: tax,
-            service: service
-        }).toString();
-
-        // Buka jendela untuk cetak nota
-        const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
-    });
-</script>
-<script>
-    function handleMember(isMember) {
-    const select = document.getElementById('customer_id');
-    select.disabled = false;
-    select.style.display = 'block'; // tampilkan select
-    document.getElementById('memberInfo').innerHTML = '';
-
-    if (isMember) {
-        select.disabled = false;
-        select.style.pointerEvents = 'auto';
-        select.style.backgroundColor = '';
-        // Tampilkan modal scan
-        var myModal = new bootstrap.Modal(document.getElementById('scanMemberModal'));
-        myModal.show();
-    } else {
-        // Pilih customer umum
-        for (const option of select.options) {
-            if (option.text.toLowerCase().includes('umum')) {
-                option.selected = true;
-                break;
-            }
-        }
-        select.disabled = false; // jangan disable
-        select.style.pointerEvents = 'none';
-        select.style.backgroundColor = '#e9ecef';
-    }
-
-}
-
-</script>
-<script>
-    function scanUID() {
-    const uid = document.getElementById('uidInput').value.trim();
-    if (uid === "") {
-        alert("UID tidak boleh kosong.");
-        return;
-    }
-
-    fetch(`/check-member/${uid}`)
-        .then(response => response.json())
-        .then(data => {
-
-            const select = document.getElementById('customer_id');
-            if (data.success) {
-                // Set nama member di select option
-                for (const option of select.options) {
-                    if (option.value == data.member.id) {
-                        option.selected = true;
-                        select.disabled = true;
-                        break;
-                    }
-                }
-
-                document.getElementById('memberInfo').innerHTML = `
-                    <div class="alert alert-success">
-                        <strong>${data.member.name}</strong><br>
-                        Saldo: Rp${data.member.balance.toLocaleString()}
-                    </div>`;
-            } else {
-                document.getElementById('memberInfo').innerHTML = `
-                    <div class="alert alert-danger">Member dengan UID <strong>${uid}</strong> tidak ditemukan.</div>`;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan saat mencari member.');
-        });
-}
 </script>
 @endsection
