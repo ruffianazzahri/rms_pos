@@ -9,78 +9,172 @@ use Illuminate\Support\Facades\DB;
 
 class GeneralJournalController extends Controller
 {
+    // public function index(Request $request)
+    // {
+    //     $month = $request->input('month', date('m'));
+    //     $year = $request->input('year', date('Y'));
+
+    //     $rawQuery = "
+    //         SELECT * FROM (
+    //             -- General Journal Entries
+    //             SELECT
+    //                 gj.id,
+    //                 gj.date AS date,
+    //                 gj.account,
+    //                 gj.debit,
+    //                 gj.credit,
+    //                 gj.description,
+    //                 gj.order_id,
+    //                 NULL AS invoice_no,
+    //                 NULL AS order_date,
+    //                 gj.image AS image
+    //             FROM general_journal gj
+    //             WHERE MONTH(gj.date) = ? AND YEAR(gj.date) = ?
+
+    //             UNION ALL
+
+    //             -- Pendapatan dari Orders
+    //             SELECT
+    //                 NULL AS id,
+    //                 DATE(o.order_date) AS date,
+    //                 'Pendapatan (Orders)' AS account,
+    //                 0 AS debit,
+    //                 SUM(o.sub_total) AS credit,
+    //                 'Omzet dari Pembelian Customer (Tidak termasuk pajak)' AS description,
+    //                 NULL AS order_id,
+    //                 NULL AS invoice_no,
+    //                 NULL AS order_date,
+    //                 'Otomatis dari data orders' AS image
+    //             FROM orders o
+    //             WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+    //             GROUP BY DATE(o.order_date)
+
+    //             UNION ALL
+
+    //             -- Pajak Terutang dari Order Taxes
+    //             SELECT
+    //                 NULL AS id,
+    //                 grouped.date,
+    //                 'Pajak Barang dan Jasa Tertentu Terhutang' AS account,
+    //                 0 AS debit,
+    //                 SUM(grouped.tax_amount) AS credit,
+    //                 CONCAT('Pajak Restoran yang harus dibayar, dari pendapatan tanggal ', DATE_FORMAT(grouped.date, '%d %M %Y')) AS description,
+    //                 NULL AS order_id,
+    //                 NULL AS invoice_no,
+    //                 NULL AS order_date,
+    //                 'Otomatis dari data orders' AS image
+    //             FROM (
+    //                 SELECT DATE(created_at) AS date, tax_amount
+    //                 FROM order_taxes
+    //                 WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?
+    //             ) AS grouped
+    //             GROUP BY grouped.date
+    //         ) AS combined
+    //         ORDER BY date ASC
+    //         LIMIT 10;
+    //     ";
+
+
+    //     $journals = DB::select($rawQuery, [$month, $year, $month, $year, $month, $year]);
+
+    //     // Total debit dan credit dari general_journal
+    //     $totalGJQuery = "
+    //     SELECT
+    //         COALESCE(SUM(debit), 0) as total_debit,
+    //         COALESCE(SUM(credit), 0) as total_credit
+    //     FROM general_journal
+    //     WHERE MONTH(date) = ? AND YEAR(date) = ?
+    //     ";
+    //     $totalsGJ = DB::select($totalGJQuery, [$month, $year])[0];
+
+    //     // Total credit dari orders
+    //     $totalOrdersQuery = "
+    //     SELECT COALESCE(SUM(total), 0) as total_credit_orders
+    //     FROM orders
+    //     WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+    // ";
+    //     $totalCreditOrders = DB::select($totalOrdersQuery, [$month, $year])[0]->total_credit_orders;
+
+    //     // Total pajak dari order_taxes
+    //     $totalTaxQuery = "
+    //     SELECT COALESCE(SUM(tax_amount), 0) as total_tax
+    //     FROM order_taxes
+    //     WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?
+    // ";
+    //     $totalTax = DB::select($totalTaxQuery, [$month, $year])[0]->total_tax;
+
+    //     // Total pemasukan = credit GJ + credit orders + pajak
+    //     $totalPemasukan = $totalsGJ->total_credit + $totalCreditOrders + $totalTax;
+
+    //     // Total pengeluaran = debit dari general journal
+    //     $totalPengeluaran = $totalsGJ->total_debit;
+
+    //     // Saldo akhir = pemasukan - pengeluaran
+    //     $saldoAkhir = $totalPemasukan - $totalPengeluaran;
+
+    //     return view('general_journal.index', [
+    //         'journals' => $journals,
+    //         'totalDebit' => $totalPengeluaran,
+    //         'totalCredit' => $totalPemasukan,
+    //         'saldoAkhir' => $saldoAkhir,
+    //         'filterMonth' => $month,
+    //         'filterYear' => $year,
+    //     ]);
+    // }
+
     public function index(Request $request)
     {
         $month = $request->input('month', date('m'));
         $year = $request->input('year', date('Y'));
 
+        // Ambil data pendapatan dari tabel orders
         $rawQuery = "
-            SELECT * FROM (
-                SELECT
-                    gj.id, gj.date as date, gj.account, gj.debit, gj.credit, gj.description, gj.order_id,
-                    NULL as invoice_no, NULL as order_date, gj.image as image
-                FROM general_journal gj
-                WHERE MONTH(gj.date) = ? AND YEAR(gj.date) = ?
-
-                UNION ALL
-
-                SELECT
-                    NULL as id,
-                    DATE(o.order_date) as date,
-                    'Pendapatan (Orders)' as account,
-                    0 as debit,
-                    SUM(o.total) as credit,
-                    'Omzet dari Pembelian Customer' as description,
-                    NULL as order_id,
-                    NULL as invoice_no,
-                    NULL as order_date, 'Otomatis dari data orders' as image
-                FROM orders o
-                WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
-                GROUP BY DATE(o.order_date)
-            ) AS combined
-            ORDER BY date ASC
-            LIMIT 10;
-
-            ";
-
-        $journals = DB::select($rawQuery, [$month, $year, $month, $year]);
-
-        // Total debit dan credit dari general_journal
-        $totalGJQuery = "
-        SELECT
-            COALESCE(SUM(debit), 0) as total_debit,
-            COALESCE(SUM(credit), 0) as total_credit
-        FROM general_journal
-        WHERE MONTH(date) = ? AND YEAR(date) = ?
+            SELECT
+                NULL AS order_id,
+                DATE(o.order_date) AS date,
+                'Pendapatan (Orders)' AS account,
+                0 AS debit,
+                SUM(o.total) AS credit,
+                'Omzet Penjualan' AS description,
+                NULL AS invoice_no,
+                NULL AS order_date,
+                'Otomatis dari data orders' AS image
+            FROM orders o
+            WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+            GROUP BY DATE(o.order_date)
+            ORDER BY DATE(o.order_date) ASC
+            LIMIT 30;
         ";
-        $totalsGJ = DB::select($totalGJQuery, [$month, $year])[0];
+
+        $journals = DB::select($rawQuery, [$month, $year]);
 
         // Total credit dari orders
         $totalOrdersQuery = "
-        SELECT COALESCE(SUM(total), 0) as total_credit_orders
-        FROM orders
-        WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+            SELECT COALESCE(SUM(total), 0) as total_credit_orders
+            FROM orders
+            WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
         ";
         $totalCreditOrders = DB::select($totalOrdersQuery, [$month, $year])[0]->total_credit_orders;
 
-        // Total pemasukan = general_journal credit + orders total
-        $totalPemasukan = $totalsGJ->total_credit + $totalCreditOrders;
+        // Total pajak dari order_taxes
+        $totalTaxQuery = "
+            SELECT COALESCE(SUM(tax_amount), 0) as total_tax
+            FROM order_taxes
+            WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?
+        ";
+        $totalTax = DB::select($totalTaxQuery, [$month, $year])[0]->total_tax;
 
-        // Total pengeluaran = general_journal debit
-        $totalPengeluaran = $totalsGJ->total_debit;
-
-        // Saldo akhir = total pemasukan - total pengeluaran
-        $saldoAkhir = $totalPemasukan - $totalPengeluaran;
+        // Total pemasukan = credit orders + pajak
+        $totalPemasukan = $totalCreditOrders + $totalTax;
 
         return view('general_journal.index', [
             'journals' => $journals,
-            'totalDebit' => $totalPengeluaran,
             'totalCredit' => $totalPemasukan,
-            'saldoAkhir' => $saldoAkhir,
             'filterMonth' => $month,
             'filterYear' => $year,
         ]);
     }
+
 
 
 
@@ -132,26 +226,29 @@ class GeneralJournalController extends Controller
 
 
 
-    public function edit(GeneralJournal $general_journal)
+    public function edit($id)
     {
-        return view('general_journal.edit', compact('general_journal'));
+        $journal = GeneralJournal::findOrFail($id);
+        return view('general_journal.edit', compact('journal'));
     }
 
-    public function update(Request $request, GeneralJournal $general_journal)
+    public function update(Request $request, $id)
     {
-        $request->validate([
+        $validated = $request->validate([
             'date' => 'required|date',
-            'account' => 'required|string|max:100',
+            'account' => 'required|string|max:255',
             'debit' => 'nullable|numeric',
             'credit' => 'nullable|numeric',
-            'description' => 'nullable|string|max:255',
-            'order_id' => 'nullable|exists:orders,id',
+            'description' => 'nullable|string',
         ]);
 
-        $general_journal->update($request->all());
+        $journal = GeneralJournal::findOrFail($id);
+        $journal->update($validated);
 
-        return redirect()->route('general_journal.index')->with('success', 'Journal updated successfully.');
+        return redirect()->route('general_journal.index')
+            ->with('success', 'Entri jurnal berhasil diperbarui.');
     }
+
 
     public function destroy(GeneralJournal $general_journal)
     {

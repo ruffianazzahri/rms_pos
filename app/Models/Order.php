@@ -17,6 +17,7 @@ class Order extends Model
         'total_products',
         'sub_total',
         'vat',
+        'service_charge',
         'invoice_no',
         'total',
         'payment_status',

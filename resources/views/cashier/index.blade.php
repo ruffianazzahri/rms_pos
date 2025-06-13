@@ -69,8 +69,8 @@
         <input type="hidden" id="tax-percentage" value="{{ $restaurant_tax }}">
         <input type="hidden" id="service-percentage" value="{{ $service_charge }}">
         <h5>Subtotal: Rp <span id="total">0</span></h5>
-        <h5>Pajak Restoran (10%): Rp <span id="tax-amount">0</span></h5>
         <h5>Jasa Pelayanan (10%): Rp <span id="service-amount">0</span></h5>
+        <h5>Pajak Restoran (10%): Rp <span id="tax-amount">0</span></h5>
         <h5>Total Bayar: Rp <span id="grand-total"></span></h5>
         {{-- Pembayaran --}}
         <form method="POST" action="{{ route('cashier.transaksi') }}" id="form-transaksi">
@@ -445,16 +445,19 @@
         const taxPercentage = parseFloat(document.getElementById("tax-percentage").value) || 0;
         const servicePercentage = parseFloat(document.getElementById("service-percentage").value) || 0;
 
-        const taxAmount = subtotal * taxPercentage / 100;
+        // === Hitung sesuai urutan yang benar ===
         const serviceAmount = subtotal * servicePercentage / 100;
-        const grandTotal = subtotal + taxAmount + serviceAmount;
+        const baseForTax = subtotal + serviceAmount;
+        const taxAmount = baseForTax * taxPercentage / 100;
+        const grandTotal = baseForTax + taxAmount;
 
-        // Tampilkan
+        // Tampilkan hasil
         totalDisplay.innerText = subtotal.toLocaleString();
-        document.getElementById("tax-amount").innerText = taxAmount.toLocaleString();
         document.getElementById("service-amount").innerText = serviceAmount.toLocaleString();
+        document.getElementById("tax-amount").innerText = taxAmount.toLocaleString();
         document.getElementById("grand-total").innerText = grandTotal.toLocaleString();
 
+        // Simpan data cart ke input hidden
         itemsInput.value = JSON.stringify(cart);
     }
 
@@ -478,45 +481,42 @@
 </script>
 <script>
     document.getElementById('printNota').addEventListener('click', function () {
-        const orderId = window.lastOrderId;
+    const orderId = window.lastOrderId;
 
-        const methodSelect = document.querySelector('select[name="method"]');
-        const cashReceived = document.getElementById('cash-received');
-        const changeInput = document.getElementById('cash-change');
-        const taxInput = document.getElementById('tax-amount');
-        const serviceInput = document.getElementById('service-amount');
+    const methodSelect = document.querySelector('select[name="method"]');
+    const cashReceived = document.getElementById('cash-received');
+    const changeInput = document.getElementById('cash-change');
+    const subtotalInput = document.getElementById('subtotal-amount'); // ⬅️ Tambahkan input ini di HTML
+    const servicePercentageInput = document.getElementById('service-percentage');
+    const taxPercentageInput = document.getElementById('tax-percentage');
 
-        // Ambil nilai dengan aman
-        const pay = cashReceived && cashReceived.value
-            ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0
-            : 0;
+    // Ambil nilai dengan aman
+    const pay = cashReceived?.value ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0 : 0;
+    const change = changeInput?.value ? parseInt(changeInput.value.replace(/[^\d]/g, '')) || 0 : 0;
+    const method = methodSelect?.value || 'Tidak diketahui';
 
-        const change = changeInput && changeInput.value
-            ? changeInput.value.replace(/[^\d]/g, '')
-            : 0;
+    const subtotal = subtotalInput?.value ? parseInt(subtotalInput.value.replace(/[^\d]/g, '')) || 0 : 0;
+    const servicePercent = servicePercentageInput?.value ? parseFloat(servicePercentageInput.value) || 0 : 0;
+    const taxPercent = taxPercentageInput?.value ? parseFloat(taxPercentageInput.value) || 0 : 0;
 
-        const tax = taxInput && taxInput.value
-            ? taxInput.value.replace(/[^\d]/g, '')
-            : 0;
+    // Hitung ulang sesuai rumus yang benar
+    const serviceAmount = Math.round(subtotal * servicePercent / 100);
+    const taxBase = subtotal + serviceAmount;
+    const taxAmount = Math.round(taxBase * taxPercent / 100);
 
-        const service = serviceInput && serviceInput.value
-            ? serviceInput.value.replace(/[^\d]/g, '')
-            : 0;
+    // Susun parameter URL
+    const params = new URLSearchParams({
+        pay: pay,
+        change: change,
+        method: method,
+        tax: taxAmount,
+        service: serviceAmount
+    }).toString();
 
-        const method = methodSelect ? methodSelect.value : 'Tidak diketahui';
+    // Buka jendela untuk cetak nota
+    const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
+});
 
-        // Susun parameter URL
-        const params = new URLSearchParams({
-            pay: pay,
-            change: change,
-            method: method,
-            tax: tax,
-            service: service
-        }).toString();
-
-        // Buka jendela untuk cetak nota
-        const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
-    });
 </script>
 <script>
     function handleMember(isMember) {

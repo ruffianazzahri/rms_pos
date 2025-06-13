@@ -64,10 +64,12 @@
                 <th>Tanggal</th>
                 <th>Akun</th>
                 <th>Pemasukan</th>
-                <th>Pengeluaran</th>
+                {{-- <th>Pengeluaran</th> --}}
                 <th>Deskripsi</th>
-                <th>Order ID</th>
-                <th>Gambar</th> {{-- Tambah kolom image --}}
+                {{-- <th>Order ID</th> --}}
+                <th>Lainnya</th> {{-- Tambah kolom image --}}
+                {{-- <th>Aksi</th> --}}
+
             </tr>
         </thead>
         <tbody>
@@ -77,9 +79,9 @@
 
                 <td>{{ $journal->account }}</td>
                 <td>{{ ($journal->credit ?? 0) > 0 ? 'Rp ' . number_format($journal->credit, 2) : '-' }}</td>
-                <td>{{ ($journal->debit ?? 0) > 0 ? 'Rp ' . number_format($journal->debit, 2) : '-' }}</td>
+                {{-- <td>{{ ($journal->debit ?? 0) > 0 ? 'Rp ' . number_format($journal->debit, 2) : '-' }}</td> --}}
                 <td>{{ $journal->description }}</td>
-                <td>{{ $journal->order_id }}</td>
+                {{-- <td>{{ $journal->order_id }}</td> --}}
 
                 <td>
                     @php
@@ -98,6 +100,16 @@
                     -
                     @endif
                 </td>
+                {{-- <td>
+                    @if($journal->id)
+                    <a href="{{ route('general_journal.edit', $journal->id) }}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    @else
+                    <span class="text-muted">-</span>
+                    @endif
+                </td> --}}
+
 
             </tr>
             @empty
@@ -110,13 +122,13 @@
             <tr>
                 <th colspan="2" class="text-right">Total</th>
                 <th>{{ number_format($totalCredit, 2) }}</th>
-                <th>{{ number_format($totalDebit, 2) }}</th>
-                <th colspan="3"></th>
+                {{-- <th>{{ number_format($totalDebit, 2) }}</th> --}}
+                <th colspan="2"></th>
             </tr>
-            <tr>
+            {{-- <tr>
                 <th colspan="2" class="text-right">Saldo Akhir (Pemasukan - Pengeluaran)</th>
-                <th colspan="5">{{ number_format($saldoAkhir, 2) }}</th>
-            </tr>
+                <th colspan="6">{{ number_format($saldoAkhir, 2) }}</th>
+            </tr> --}}
         </tfoot>
     </table>
 
