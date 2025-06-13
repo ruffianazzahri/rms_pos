@@ -56,7 +56,7 @@
                         </div>
 
         </div>
-        <div class="col-lg-8">
+        {{-- <div class="col-lg-8">
             <div class="row">
                 <div class="col-lg-4 col-md-4">
                     <div class="card card-block card-stretch card-height">
@@ -119,7 +119,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
         <div class="col-lg-12">
             <div class="card card-block card-stretch card-height">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -141,9 +141,11 @@
                                     <a class="dropdown-item" href="#" data-period="yearly">Tahun</a>
                                     <a class="dropdown-item" href="#" data-period="monthly">Bulan</a>
                                     <a class="dropdown-item" href="#" data-period="weekly">Minggu</a>
+                                    <a class="dropdown-item" href="#" data-period="daily">Harian</a>
                                 </div>
                             </div>
                         </div>
+
 
                         <button type="button" class="btn btn-sm btn-outline-success ml-3" data-toggle="modal"
                             data-target="#printModal">
@@ -176,7 +178,10 @@
                             class="btn btn-outline-info m-2">Mingguan</a>
                         <a href="{{ route('omzet.print.form', ['period' => 'monthly']) }}" target="_blank"
                             class="btn btn-outline-success m-2">Bulanan</a>
+                        <a href="{{ route('omzet.print.form', ['period' => 'yearly']) }}" target="_blank"
+                            class="btn btn-outline-warning m-2">Tahunan</a> <!-- Tambahan -->
                     </div>
+
                 </div>
             </div>
         </div>
@@ -209,7 +214,7 @@
             </div>
         </div> --}}
 
-        <div class="col-lg-8">
+        {{-- <div class="col-lg-8">
             <div class="card card-block card-stretch card-height">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <div class="header-title">
@@ -279,7 +284,7 @@
                 </div>
             </div>
             @endforeach
-        </div>
+        </div> --}}
     </div>
     <!-- Page end  -->
 </div>
@@ -407,7 +412,5 @@
     // Load default data monthly
     loadChartData(currentPeriod);
 });
-
-
 </script>
 @endsection

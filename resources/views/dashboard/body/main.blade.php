@@ -32,7 +32,7 @@
     <!-- loader END -->
 
     <!-- Wrapper Start -->
-    <div class="wrapper">
+    <div class="wrapper" style="background-color: #FEF3E2">
         @include('dashboard.body.sidebar')
 
         @include('dashboard.body.navbar')

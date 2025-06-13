@@ -1,4 +1,10 @@
-<div class="iq-sidebar sidebar-default " style="background-color: #FFD95F">
+<style>
+    .iq-sidebar-menu .iq-menu li a {
+        color: #000 !important;
+    }
+</style>
+
+<div class="iq-sidebar sidebar-default " style="background-color: #FFB22C">
     <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
         <a href="{{ route('dashboard') }}" class="header-logo">
             <img src="{{ asset('assets/images/logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo">
@@ -27,12 +33,12 @@
                 </li>
 
                 @if (auth()->user()->can('pos.menu'))
-                <li class="{{ Request::is('pos') ? 'active' : '' }}">
+                {{-- <li class="{{ Request::is('pos') ? 'active' : '' }}">
                     <a href="{{ route('pos.index') }}" class="svg-icon">
                         <i class="fa-solid fa-cart-shopping"></i>
                         <span class="ml-3">POS</span>
                     </a>
-                </li>
+                </li> --}}
                 <li class="{{ Request::is('cashier*') ? 'active' : '' }}">
                     <a href="{{ route('cashier.index') }}" class="svg-icon">
                         <i class="fa-solid fa-money-bill-wave"></i>
@@ -130,7 +136,7 @@
                 @endif
 
                 <hr>
-
+                {{--
                 @if (auth()->user()->can('employee.menu'))
                 <li class="{{ Request::is('employees*') ? 'active' : '' }}">
                     <a href="{{ route('employees.index') }}" class="svg-icon">
@@ -140,15 +146,16 @@
                 </li>
                 @endif
                 @if (auth()->user()->can('customer.menu'))
-                {{-- Customers VIP --}}
+
                 <li class="{{ Request::is('customers_vip*') ? 'active' : '' }}">
                     <a href="{{ route('customers_vip.index') }}" class="svg-icon">
                         <i class="fa-solid fa-users"></i>
                         <span class="ml-3">Customers (VIP)</span>
                     </a>
-                </li>
+                </li> --}}
 
                 {{-- Customers Biasa --}}
+                @if (auth()->user()->can('customer.menu'))
                 <li
                     class="{{ (Request::is('customers') || Request::is('customers/*')) && !Request::is('customers/vip*') ? 'active' : '' }}">
                     <a href="{{ route('customers.index') }}" class="svg-icon">
@@ -159,15 +166,15 @@
                 @endif
 
 
-                @if (auth()->user()->can('supplier.menu'))
+                {{-- @if (auth()->user()->can('supplier.menu'))
                 <li class="{{ Request::is('suppliers*') ? 'active' : '' }}">
                     <a href="{{ route('suppliers.index') }}" class="svg-icon">
                         <i class="fa-solid fa-users"></i>
                         <span class="ml-3">Suppliers</span>
                     </a>
                 </li>
-                @endif
-
+                @endif --}}
+                {{--
                 @if (auth()->user()->can('salary.menu'))
                 <li>
                     <a href="#advance-salary" class="collapsed" data-toggle="collapse" aria-expanded="false">
@@ -204,9 +211,9 @@
                         </li>
                     </ul>
                 </li>
-                @endif
+                @endif --}}
 
-                @if (auth()->user()->can('attendence.menu'))
+                {{-- @if (auth()->user()->can('attendence.menu'))
                 <li>
                     <a href="#attendence" class="collapsed" data-toggle="collapse" aria-expanded="false">
                         <i class="fa-solid fa-calendar-days"></i>
@@ -234,7 +241,7 @@
                 </li>
                 @endif
 
-                <hr>
+                <hr> --}}
 
 
                 @if (auth()->user()->can('roles.menu'))

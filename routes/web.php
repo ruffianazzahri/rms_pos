@@ -34,6 +34,11 @@ use App\Http\Controllers\Dashboard\MasterChargeController;
 |
 */
 
+
+Route::view('/backend/privacy-policy', 'backend.privacy-policy')->name('privacy-policy');
+Route::view('/backend/terms-of-service', 'backend.terms-of-service')->name('terms-of-service');
+
+
 Route::get('/', function () {
     return view('welcome');
 });

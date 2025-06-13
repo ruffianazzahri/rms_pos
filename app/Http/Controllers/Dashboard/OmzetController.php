@@ -16,7 +16,7 @@ class OmzetController extends Controller
     public function print(Request $request)
     {
         $request->validate([
-            'period' => 'required|in:daily,weekly,monthly',
+            'period' => 'required|in:daily,weekly,monthly,yearly',
         ]);
 
         $period = $request->period;
@@ -32,10 +32,10 @@ class OmzetController extends Controller
             $query->whereDate('order_date', $now->toDateString());
 
             $query->selectRaw("
-        DATE_FORMAT(order_date, '%Y-%m-%d %H:00:00') AS label,  -- label per jam
-        DATE_FORMAT(order_date, '%Y-%m-%d %H:00:00') AS sort_date,
-        SUM(total) AS total
-    ")
+                DATE_FORMAT(order_date, '%Y-%m-%d %H:00:00') AS label,  -- label per jam
+                DATE_FORMAT(order_date, '%Y-%m-%d %H:00:00') AS sort_date,
+                SUM(total) AS total
+            ")
                 ->groupBy('label', 'sort_date')
                 ->orderBy('sort_date');
         } elseif ($period === 'weekly') {
@@ -53,7 +53,7 @@ class OmzetController extends Controller
             DATE_FORMAT(order_date, '%Y-%m') AS month_label,
             MIN(order_date) AS min_date,
             SUM(total) AS total
-        ");
+            ");
 
             $query->groupBy('week_of_month', 'month_label')
                 ->orderBy('month_label')
@@ -72,6 +72,15 @@ class OmzetController extends Controller
             $totalOmzet = $data->sum('total');
 
             return view('omzet.print_result', compact('data', 'period', 'totalOmzet'));
+        } elseif ($period === 'yearly') {
+            // Ambil semua data per tahun
+            $query->selectRaw("
+                YEAR(order_date) AS label,
+                MIN(order_date) AS sort_date,
+                SUM(total) AS total
+            ")
+            ->groupBy('label')
+            ->orderBy('label');
         } else { // monthly
             // Filter hanya tahun ini
             $startOfYear = $now->copy()->startOfYear();
