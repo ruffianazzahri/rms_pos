@@ -23,6 +23,9 @@ use App\Http\Controllers\Dashboard\ChartController;
 use App\Http\Controllers\Dashboard\OmzetController;
 use App\Http\Controllers\Dashboard\GeneralJournalController;
 use App\Http\Controllers\Dashboard\MasterChargeController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -34,10 +37,24 @@ use App\Http\Controllers\Dashboard\MasterChargeController;
 |
 */
 
+// Menampilkan form "Lupa Password"
+Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
+    ->middleware('guest')->name('password.request');
+
+// Mengirim email reset
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
+    ->middleware('guest')->name('password.email');
+
+// Menampilkan form "Password Baru"
+Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
+    ->middleware('guest')->name('password.reset');
+
+// Simpan password baru
+Route::put('/reset-password', [NewPasswordController::class, 'store'])
+    ->middleware('guest')->name('password.updatepassword');
 
 Route::view('/backend/privacy-policy', 'backend.privacy-policy')->name('privacy-policy');
 Route::view('/backend/terms-of-service', 'backend.terms-of-service')->name('terms-of-service');
-
 
 Route::get('/', function () {
     return view('welcome');

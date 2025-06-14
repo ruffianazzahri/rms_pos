@@ -1,4 +1,4 @@
-<footer class="iq-footer">
+<footer class="iq-footer mt-3">
     <div class="container-fluid">
         <div class="card">
             <div class="card-body">

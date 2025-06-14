@@ -66,7 +66,7 @@
                 <li>
                     <a href="#orders" class="collapsed" data-toggle="collapse" aria-expanded="false">
                         <i class="fa-solid fa-basket-shopping"></i>
-                        <span class="ml-3">Orders</span>
+                        <span class="ml-3">Pesanan</span>
                         <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20"
                             xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -83,7 +83,7 @@
                         </li> --}}
                         <li class="{{ Request::is('orders/complete*') ? 'active' : '' }}">
                             <a href="{{ route('order.completeOrders') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span> Complete Orders</span>
+                                <i class="fa-solid fa-arrow-right"></i><span> Pesanan Selesai</span>
                             </a>
                         </li>
                         {{-- <li class="{{ Request::is('pending/due*') ? 'active' : '' }}">
@@ -93,7 +93,7 @@
                         </li> --}}
                         <li class="{{ Request::is(['stock*']) ? 'active' : '' }}">
                             <a href="{{ route('order.stockManage') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span>Stock Management</span>
+                                <i class="fa-solid fa-arrow-right"></i><span>Manajemen Stock</span>
                             </a>
                         </li>
                     </ul>
@@ -115,17 +115,17 @@
                     <ul id="products" class="iq-submenu collapse" data-parent="#iq-sidebar-toggle" style="">
                         <li class="{{ Request::is(['products']) ? 'active' : '' }}">
                             <a href="{{ route('products.index') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span>Products</span>
+                                <i class="fa-solid fa-arrow-right"></i><span>Produk</span>
                             </a>
                         </li>
                         <li class="{{ Request::is(['products/create']) ? 'active' : '' }}">
                             <a href="{{ route('products.create') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span>Add Product</span>
+                                <i class="fa-solid fa-arrow-right"></i><span>Tambah Produk</span>
                             </a>
                         </li>
                         <li class="{{ Request::is(['categories*']) ? 'active' : '' }}">
                             <a href="{{ route('categories.index') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span>Categories</span>
+                                <i class="fa-solid fa-arrow-right"></i><span>Kategori</span>
                             </a>
                         </li>
                     </ul>
@@ -245,7 +245,7 @@
                 <li>
                     <a href="#permission" class="collapsed" data-toggle="collapse" aria-expanded="false">
                         <i class="fa-solid fa-key"></i>
-                        <span class="ml-3">Role & Permission</span>
+                        <span class="ml-3">Role & Hak Akses</span>
                         <svg class="svg-icon iq-arrow-right arrow-active" width="20" height="20"
                             xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -257,17 +257,17 @@
                         <li
                             class="{{ Request::is(['permission', 'permission/create', 'permission/edit/*']) ? 'active' : '' }}">
                             <a href="{{ route('permission.index') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span>Permissions</span>
+                                <i class="fa-solid fa-arrow-right"></i><span>Hak Akses</span>
                             </a>
                         </li>
                         <li class="{{ Request::is(['role', 'role/create', 'role/edit/*']) ? 'active' : '' }}">
                             <a href="{{ route('role.index') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span>Roles</span>
+                                <i class="fa-solid fa-arrow-right"></i><span>Role</span>
                             </a>
                         </li>
                         <li class="{{ Request::is(['role/permission*']) ? 'active' : '' }}">
                             <a href="{{ route('rolePermission.index') }}">
-                                <i class="fa-solid fa-arrow-right"></i><span>Role in Permissions</span>
+                                <i class="fa-solid fa-arrow-right"></i><span>Role untuk Hak Akses</span>
                             </a>
                         </li>
                     </ul>
@@ -278,7 +278,7 @@
                 <li class="{{ Request::is('users*') ? 'active' : '' }}">
                     <a href="{{ route('users.index') }}" class="svg-icon">
                         <i class="fa-solid fa-users"></i>
-                        <span class="ml-3">Users</span>
+                        <span class="ml-3">Pengguna</span>
                     </a>
                 </li>
                 @endif
