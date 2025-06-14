@@ -40,7 +40,8 @@
                 data-price="{{ $product->selling_price }}">
 
                 {{-- Tampilkan gambar produk --}}
-                <img src="{{ asset($product->product_image) }}" alt="{{ $product->product_name }}"
+                <img src="{{ $product->product_image ? asset('storage/products/' . $product->product_image) : asset('assets/images/product/default.webp') }}"
+                    alt="{{ $product->product_name }}"
                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; display: block; margin: 0 auto 5px;">
 
                 {{-- Nama dan harga --}}

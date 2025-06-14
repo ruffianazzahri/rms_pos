@@ -4,7 +4,7 @@
     }
 </style>
 
-<div class="iq-sidebar sidebar-default " style="background-color: #FFB22C">
+<div class="iq-sidebar sidebar-default " style="background-color: #FFB22C;">
     <div class="iq-sidebar-logo d-flex align-items-center justify-content-between">
         <a href="{{ route('dashboard') }}" class="header-logo">
             <img src="{{ asset('assets/images/logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo">
@@ -19,16 +19,13 @@
             <ul id="iq-sidebar-toggle" class="iq-menu">
                 <li class="{{ Request::is('dashboard') ? 'active' : '' }}">
                     <a href="{{ route('dashboard') }}" class="svg-icon">
-                        <svg class="svg-icon" id="p-dash1" width="20" height="20" xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path
-                                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
-                            </path>
-                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                            <path d="M3 9l9-6 9 6v9a2 2 0 0 1-2 2h-3v-6H8v6H5a2 2 0 0 1-2-2z" />
                         </svg>
-                        <span class="ml-4">Dashboards</span>
+
+
+                        <span class="ml-4">Beranda</span>
                     </a>
                 </li>
 
@@ -155,7 +152,7 @@
                 </li> --}}
 
                 {{-- Customers Biasa --}}
-                @if (auth()->user()->can('customer.menu'))
+                {{-- @if (auth()->user()->can('customer.menu'))
                 <li
                     class="{{ (Request::is('customers') || Request::is('customers/*')) && !Request::is('customers/vip*') ? 'active' : '' }}">
                     <a href="{{ route('customers.index') }}" class="svg-icon">
@@ -163,7 +160,7 @@
                         <span class="ml-3">Customers</span>
                     </a>
                 </li>
-                @endif
+                @endif --}}
 
 
                 {{-- @if (auth()->user()->can('supplier.menu'))

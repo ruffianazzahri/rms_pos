@@ -1,4 +1,4 @@
-<div class="iq-top-navbar" style="background-color: #F3C623">
+<div class="iq-top-navbar" style="background-color: #F3C623; width:100%">
     <div class="iq-navbar-custom">
         <nav class="navbar navbar-expand-lg navbar-light p-0">
             {{-- <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
@@ -24,7 +24,7 @@
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav ml-auto navbar-list align-items-center">
-                        <li class="nav-item nav-icon search-content">
+                        {{-- <li class="nav-item nav-icon search-content">
                             <a href="#" class="search-toggle rounded" id="dropdownSearch" data-toggle="dropdown"
                                 aria-haspopup="true" aria-expanded="false">
                                 <i class="ri-search-line"></i>
@@ -38,8 +38,8 @@
                                     </div>
                                 </form>
                             </div>
-                        </li>
-                        <li class="nav-item nav-icon dropdown caption-content">
+                        </li> --}}
+                        <li class="nav-item nav-icon dropdown caption-content mt-2">
                             <a href="#" class="search-toggle dropdown-toggle" id="dropdownMenuButton4"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <img src="{{ auth()->user()->photo ? asset('storage/profile/'.auth()->user()->photo) : asset('assets/images/user/1.png') }}"
