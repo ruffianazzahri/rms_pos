@@ -79,7 +79,7 @@
                             <th>@sortablelink('supplier.name', 'supplier')</th>
                             <th>@sortablelink('selling_price', 'price')</th>
                             {{-- <th>Status</th> --}}
-                            <th>Action</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="ligth-body">

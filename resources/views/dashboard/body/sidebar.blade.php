@@ -42,6 +42,9 @@
                         <span class="ml-3">Kasir</span>
                     </a>
                 </li>
+                @endif
+                <hr>
+                @if (auth()->user()->can('pos.financial'))
                 <li class="{{ Request::is('general_journal*') ? 'active' : '' }}">
                     <a href="{{ route('general_journal.index') }}" class="svg-icon">
                         <i class="fa-solid fa-book"></i>
@@ -54,14 +57,8 @@
                         <span class="ml-3">Pajak / Diskon</span>
                     </a>
                 </li>
-
-
                 @endif
-
-
-
                 <hr>
-
                 @if (auth()->user()->can('orders.menu'))
                 <li>
                     <a href="#orders" class="collapsed" data-toggle="collapse" aria-expanded="false">

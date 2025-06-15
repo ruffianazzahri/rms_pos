@@ -28,7 +28,7 @@
                 <td>{{ $charge->is_active ? 'Aktif' : 'Tidak Aktif' }}</td>
                 <td>
                     @if($charge->type === 'tax')
-                    <span class="text-muted small">Hubungi Owner atau Developer aplikasi untuk mengubah persentase
+                    <span class="text-muted small">Hubungi Superadmin atau Developer aplikasi untuk mengubah persentase
                         pajak.</span>
                     @else
                     <a href="{{ route('master-charges.edit', $charge->id) }}" class="btn btn-sm btn-warning">Edit</a>

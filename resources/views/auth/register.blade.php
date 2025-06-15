@@ -22,7 +22,7 @@
                                                     class="floating-input form-control @error('name') is-invalid @enderror"
                                                     type="text" placeholder=" " name="name" autocomplete="off"
                                                     value="{{ old('name') }}" required>
-                                                <label>Full Name</label>
+                                                <label>Nama Lengkap</label>
                                             </div>
                                             @error('name')
                                             <div class="mb-4" style="margin-top: -20px">

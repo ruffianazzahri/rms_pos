@@ -5,21 +5,23 @@
     <div class="row">
         <div class="col-lg-12">
             @if (session()->has('success'))
-                <div class="alert text-white bg-success" role="alert">
-                    <div class="iq-alert-text">{{ session('success') }}</div>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <div class="alert text-white bg-success" role="alert">
+                <div class="iq-alert-text">{{ session('success') }}</div>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <i class="ri-close-line"></i>
-                    </button>
-                </div>
+                </button>
+            </div>
             @endif
             <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                 <div>
                     <h4 class="mb-3">Pay Salary List</h4>
-                    <p class="mb-0">A pay salary dashboard lets you easily gather and visualize pay salary data from optimizing <br>
+                    <p class="mb-0">A pay salary dashboard lets you easily gather and visualize pay salary data from
+                        optimizing <br>
                         the pay salary experience, ensuring pay salary retention. </p>
                 </div>
                 <div>
-                <a href="{{ route('advance-salary.index') }}" class="btn btn-danger add-list"><i class="fa-solid fa-trash mr-3"></i>Clear Search</a>
+                    <a href="{{ route('advance-salary.index') }}" class="btn btn-danger add-list"><i
+                            class="fa-solid fa-trash mr-3"></i>Clear Search</a>
                 </div>
             </div>
         </div>
@@ -31,10 +33,10 @@
                         <label for="row" class="col-sm-3 align-self-center">Row:</label>
                         <div class="col-sm-9">
                             <select class="form-control" name="row">
-                                <option value="10" @if(request('row') == '10')selected="selected"@endif>10</option>
-                                <option value="25" @if(request('row') == '25')selected="selected"@endif>25</option>
-                                <option value="50" @if(request('row') == '50')selected="selected"@endif>50</option>
-                                <option value="100" @if(request('row') == '100')selected="selected"@endif>100</option>
+                                <option value="10" @if(request('row')=='10' )selected="selected" @endif>10</option>
+                                <option value="25" @if(request('row')=='25' )selected="selected" @endif>25</option>
+                                <option value="50" @if(request('row')=='50' )selected="selected" @endif>50</option>
+                                <option value="100" @if(request('row')=='100' )selected="selected" @endif>100</option>
                             </select>
                         </div>
                     </div>
@@ -43,9 +45,11 @@
                         <label class="control-label col-sm-3 align-self-center" for="search">Search:</label>
                         <div class="col-sm-8">
                             <div class="input-group">
-                                <input type="text" id="search" class="form-control" name="search" placeholder="Search employee" value="{{ request('search') }}">
+                                <input type="text" id="search" class="form-control" name="search"
+                                    placeholder="Search employee" value="{{ request('search') }}">
                                 <div class="input-group-append">
-                                    <button type="submit" class="input-group-text bg-primary"><i class="fa-solid fa-magnifying-glass font-size-20"></i></button>
+                                    <button type="submit" class="input-group-text bg-primary"><i
+                                            class="fa-solid fa-magnifying-glass font-size-20"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -66,24 +70,27 @@
                             <th>@sortablelink('employee.salary', 'salary')</th>
                             <th>@sortablelink('advance_salary', 'advance salary')</th>
                             <th>Due</th>
-                            <th>Action</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="ligth-body">
                         @forelse ($advanceSalaries as $advanceSalary)
                         <tr>
-                            <td>{{ (($advanceSalaries->currentPage() * 10) - 10) + $loop->iteration  }}</td>
+                            <td>{{ (($advanceSalaries->currentPage() * 10) - 10) + $loop->iteration }}</td>
                             <td>
-                                <img class="avatar-60 rounded" src="{{ $advanceSalary->employee->photo ? asset('storage/employees/'.$advanceSalary->employee->photo) : asset('assets/images/user/1.png') }}">
+                                <img class="avatar-60 rounded"
+                                    src="{{ $advanceSalary->employee->photo ? asset('storage/employees/'.$advanceSalary->employee->photo) : asset('assets/images/user/1.png') }}">
                             </td>
                             <td>{{ $advanceSalary->employee->name }}</td>
                             <td>{{ Carbon\Carbon::parse($advanceSalary->date)->format('M/Y') }}</td>
                             <td>${{ $advanceSalary->employee->salary }}</td>
-                            <td>{{ $advanceSalary->advance_salary ? '$'.$advanceSalary->advance_salary : 'No Advance' }}</td>
+                            <td>{{ $advanceSalary->advance_salary ? '$'.$advanceSalary->advance_salary : 'No Advance' }}
+                            </td>
                             <td>${{ $advanceSalary->employee->salary - $advanceSalary->advance_salary }}</td>
                             <td>
                                 <div class="d-flex align-items-center list-action">
-                                    <a class="btn btn-info mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Pay Now"
+                                    <a class="btn btn-info mr-2" data-toggle="tooltip" data-placement="top" title=""
+                                        data-original-title="Pay Now"
                                         href="{{ route('pay-salary.paySalary', $advanceSalary->id) }}">Pay Now</i>
                                     </a>
                                 </div>
@@ -94,7 +101,7 @@
                         <div class="alert text-white bg-danger" role="alert">
                             <div class="iq-alert-text">Data not Found.</div>
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <i class="ri-close-line"></i>
+                                <i class="ri-close-line"></i>
                             </button>
                         </div>
                         @endforelse

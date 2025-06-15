@@ -5,12 +5,12 @@
     <div class="row">
         <div class="col-lg-12">
             @if (session()->has('success'))
-                <div class="alert text-white bg-success" role="alert">
-                    <div class="iq-alert-text">{{ session('success') }}</div>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <div class="alert text-white bg-success" role="alert">
+                <div class="iq-alert-text">{{ session('success') }}</div>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                     <i class="ri-close-line"></i>
-                    </button>
-                </div>
+                </button>
+            </div>
             @endif
             <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                 <div>
@@ -31,7 +31,7 @@
                             <th>File Name</th>
                             <th>File Size</th>
                             <th>Path</th>
-                            <th>Action</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="ligth-body">
@@ -43,11 +43,15 @@
                             <td>{{ $file->getPath() }}</td>
                             <td>
                                 <div class="d-flex align-items-center list-action">
-                                    <a class="btn btn-success mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Download"
-                                        href="{{ route('backup.download', $file->getFileName()) }}"><i class="fa-solid fa-download mr-0"></i>
+                                    <a class="btn btn-success mr-2" data-toggle="tooltip" data-placement="top" title=""
+                                        data-original-title="Download"
+                                        href="{{ route('backup.download', $file->getFileName()) }}"><i
+                                            class="fa-solid fa-download mr-0"></i>
                                     </a>
-                                    <a class="btn btn-danger mr-2" data-toggle="tooltip" data-placement="top" title="" data-original-title="Delete"
-                                        href="{{ route('backup.delete', $file->getFileName()) }}"><i class="fa-solid fa-trash mr-0"></i>
+                                    <a class="btn btn-danger mr-2" data-toggle="tooltip" data-placement="top" title=""
+                                        data-original-title="Delete"
+                                        href="{{ route('backup.delete', $file->getFileName()) }}"><i
+                                            class="fa-solid fa-trash mr-0"></i>
                                     </a>
                                 </div>
                             </td>

@@ -67,7 +67,7 @@
                             <th>@sortablelink('pay')</th>
                             <th>Payment</th>
                             <th>Status</th>
-                            <th>Action</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="ligth-body">

@@ -26,7 +26,7 @@
                         <th scope="col">QTY</th>
                         <th scope="col">Price</th>
                         <th scope="col">SubTotal</th>
-                        <th scope="col">Action</th>
+                        <th scope="col">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -148,7 +148,7 @@
                                     <th>Photo</th>
                                     <th>@sortablelink('product_name', 'name')</th>
                                     <th>@sortablelink('selling_price', 'price')</th>
-                                    <th>Action</th>
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="ligth-body">
