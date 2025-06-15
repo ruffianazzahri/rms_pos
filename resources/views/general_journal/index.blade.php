@@ -4,15 +4,18 @@
 <div class="container">
     <div class="d-flex justify-content-between">
         <h3>Laporan Keuangan</h3>
-        <a href="{{ route('general_journal.create') }}" class="btn btn-primary mb-3"><i
+        {{-- <a href="{{ route('general_journal.create') }}" class="btn btn-primary mb-3"><i
                 class="fas fa-plus-circle fa-2x"></i>
-            </i></a>
+            </i></a> --}}
+
+        {{-- cetak --}}
+        <!-- Tombol Cetak -->
+        <button class="btn btn-info mb-3" data-toggle="modal" data-target="#modalRange"><i class="fas fa-print"></i>
+            Cetak Laporan</button>
+
 
     </div>
 
-    {{-- cetak --}}
-    <!-- Tombol Cetak -->
-    <button class="btn btn-info mb-3" data-toggle="modal" data-target="#modalRange">Cetak Laporan</button>
 
     <!-- Modal 1: Pilih Jangka Waktu -->
     <div class="modal fade" id="modalRange" tabindex="-1" role="dialog" aria-labelledby="modalRangeLabel"
@@ -254,6 +257,8 @@
 </script>
 <script>
     $(document).ready(function() {
+        $.fn.dataTable.ext.errMode = 'none';
+
         $('.table').DataTable({
             language: {
                 url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/id.json'
@@ -262,6 +267,16 @@
             searching: true,
             ordering: true,
             order: [[0, 'asc']],
+
+            // Optional tambahan
+            responsive: true,           // Responsif
+            autoWidth: false,           // Hindari lebar kolom otomatis yang aneh
+            columnDefs: [
+                {
+                    targets: '_all',    // Terapkan ke semua kolom
+                    defaultContent: '', // Jika ada kolom kosong, jangan error
+                }
+            ]
         });
 
         // Script modal image (tetap dari kamu)

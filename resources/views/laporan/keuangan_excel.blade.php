@@ -1,15 +1,23 @@
 <table>
     <thead>
         <tr>
-            <th>Tanggal</th>
-            <th>Omzet</th>
+            <th>Periode</th>
+            <th>Total Omzet</th>
         </tr>
     </thead>
     <tbody>
         @foreach($data as $row)
         <tr>
-            <td>{{ $row->date }}</td>
-            <td>{{ $row->omzet }}</td>
+            <td>
+                @if($period === 'mingguan')
+                Minggu ke-{{ $row->week }} Tahun {{ $row->year }}
+                @elseif($period === 'bulanan')
+                {{ \Carbon\Carbon::createFromFormat('Y-m', $row->label)->translatedFormat('F Y') }}
+                @else
+                {{ $row->label }}
+                @endif
+            </td>
+            <td>{{ number_format($row->total, 0, ',', '.') }}</td>
         </tr>
         @endforeach
     </tbody>

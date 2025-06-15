@@ -44,6 +44,27 @@
             margin-top: 10px;
             margin-bottom: 20px;
         }
+
+        @page {
+            margin: 120px 50px 150px 50px;
+            /* top, right, bottom, left */
+        }
+
+        body {
+            position: relative;
+            min-height: 100%;
+            margin: 0;
+            padding-bottom: 200px;
+            /* space for footer */
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 40px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -57,43 +78,93 @@
         <p>Kota Batam</p>
         <div class="garis-bawah"></div>
     </div>
-    <h1 style="text-align: center">Laporan Keuangan</h1>
+    @php
+    use Carbon\Carbon;
+
+    $judul = 'Laporan Keuangan';
+
+    if ($period === 'harian') {
+    $judul = 'Laporan Keuangan Tanggal ' . Carbon::now()->translatedFormat('d F Y');
+    } elseif ($period === 'mingguan') {
+    $judul = 'Laporan Keuangan Minggu Ini (' . now()->startOfWeek()->translatedFormat('d F') . ' – ' .
+    now()->endOfWeek()->translatedFormat('d F Y') . ')';
+    } elseif ($period === 'bulanan') {
+    $judul = 'Laporan Keuangan Bulan ' . Carbon::now()->translatedFormat('F Y');
+    } elseif ($period === 'custom' && $from && $to) {
+    $judul = 'Laporan Keuangan ' . Carbon::parse($from)->translatedFormat('d F Y') . ' – ' .
+    Carbon::parse($to)->translatedFormat('d F Y');
+    }
+    @endphp
+
+    <h1 style="text-align: center">{{ $judul }}</h1>
+
     <table>
         <thead>
             <tr>
-                <th>Tanggal</th>
+                <th>Periode</th>
                 <th>Omzet</th>
             </tr>
         </thead>
         <tbody>
             @foreach($data as $row)
             <tr>
-                <td>{{ $row->date }}</td>
-                <td>Rp {{ number_format($row->omzet, 0, ',', '.') }}</td>
+                <td>
+                    @if($period === 'mingguan')
+                    Minggu ke-{{ $row->week }} Tahun {{ $row->year }}
+                    @elseif($period === 'bulanan')
+                    {{ \Carbon\Carbon::createFromFormat('Y-m', $row->label)->translatedFormat('F Y') }}
+                    @else
+                    {{ $row->label }}
+                    @endif
+                </td>
+                <td>Rp {{ number_format($row->total, 0, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
+        <tfoot>
+            <tr>
+                <th style="text-align: right;">Total</th>
+                <th>
+                    Rp {{ number_format($data->sum('total'), 0, ',', '.') }}
+                </th>
+            </tr>
+        </tfoot>
+
     </table>
     <br><br>
-    <table style="width: 100%; margin-top: 40px; border: none;">
-        <tr>
-            <td style="text-align: left; width: 50%; border: none;">
-                <!-- Kosong -->
-            </td>
-            <td style="text-align: center; width: 50%; border: none;">
-                Batam, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
-                <br>
-                Tertanda,<br><br>
-                <img src="{{ public_path('images/stamp.png') }}" alt="Stempel" style="height: 100px;"><br><br>
-                <u>
-                    <hr style="width: 60%; margin: auto;">
-                </u>
-                <div style="margin-top: 5px;">Kasir</div>
-            </td>
-        </tr>
-    </table>
+    <div class="footer" style="margin-top: 60px;">
+        <table style="width: 100%; border: none;">
+            <tr>
+                <td colspan="2" style="text-align: center; border: none; padding-bottom: 20px;">
+                    Batam, {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
+                </td>
+            </tr>
+            <tr>
+                <td style="text-align: center; width: 50%; border: none; vertical-align: top;">
+                    Diketahui,<br><br>
+                    <div style="height: 100px;"></div> {{-- Penyeimbang tinggi stempel --}}
+                    <u>
+                        <hr style="width: 60%; margin: auto;">
+                    </u>
+                    <div style="margin-top: 5px;">Manager</div>
+                    <strong>Henry Lim</strong>
+                </td>
+                <td style="text-align: center; width: 50%; border: none; vertical-align: top;">
+                    Tertanda,<br><br>
+                    <div style="height: 100px;"></div>
+                    <u>
+                        <hr style="width: 60%; margin: auto;">
+                    </u>
+                    <div style="margin-top: 5px;">Kasir</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 
-    @php
+
+
+
+    {{-- @php
     $quotes = [
     "“Omzet besar dimulai dari langkah kecil yang konsisten.” – Nasi Lemak Wak Tige",
     "“Setiap sen yang masuk, adalah hasil dari pelayanan yang tulus.” – Wak Tige",
@@ -109,7 +180,7 @@
 
     <div class="quote-box">
         {{ $selectedQuote }}
-    </div>
+    </div> --}}
 
 
 </body>

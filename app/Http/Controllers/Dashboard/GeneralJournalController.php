@@ -177,73 +177,112 @@ class GeneralJournalController extends Controller
         ]);
     }
 
-    public function laporanKeuangan(Request $request)
+public function laporanKeuangan(Request $request)
 {
     $range = $request->input('range', 'bulanan');
     $from = $request->input('from');
     $to = $request->input('to');
 
-    $query = DB::table('orders')
-        ->select(
-            DB::raw("DATE(order_date) as date"),
-            DB::raw("SUM(total) as omzet"),
-        )
-        ->groupBy(DB::raw("DATE(order_date)"))
-        ->orderBy('date', 'asc');
+    $query = DB::table('orders');
 
-    // Filter berdasarkan range
     if ($range === 'harian') {
-        $query->whereDate('order_date', now());
+        // Hasil: 2025-06-12, 2025-06-13, dst.
+        $query->selectRaw("DATE(order_date) as label, SUM(total) as total")
+              ->whereMonth('order_date', now()->month)
+              ->whereYear('order_date', now()->year)
+              ->groupByRaw("DATE(order_date)");
+        $period = 'harian';
+
     } elseif ($range === 'mingguan') {
-        $query->whereBetween('order_date', [
-            now()->startOfWeek(), now()->endOfWeek()
-        ]);
+        // Hasil: Minggu ke-x
+        $query->selectRaw("YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total")
+              ->whereYear('order_date', now()->year)
+              ->groupByRaw("YEAR(order_date), WEEK(order_date, 1)");
+        $period = 'mingguan';
+
     } elseif ($range === 'bulanan') {
-        $query->whereMonth('order_date', now()->month)
-              ->whereYear('order_date', now()->year);
+        // ✅ Hasil: 2025-06, 2025-05, dst.
+        $query->selectRaw("DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total")
+              ->whereYear('order_date', now()->year)
+              ->groupByRaw("DATE_FORMAT(order_date, '%Y-%m')");
+        $period = 'bulanan';
+
     } elseif ($range === 'custom' && $from && $to) {
-        $query->whereBetween('order_date', [$from, $to]);
+        $query->selectRaw("DATE(order_date) as label, SUM(total) as total")
+              ->whereBetween('order_date', [$from, $to])
+              ->groupByRaw("DATE(order_date)");
+        $period = 'custom';
+
+    } else {
+        // Default ke bulanan
+        $query->selectRaw("DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total")
+              ->whereYear('order_date', now()->year)
+              ->groupByRaw("DATE_FORMAT(order_date, '%Y-%m')");
+        $period = 'bulanan';
     }
 
-    $data = $query->get();
+    $data = $query->orderBy('label')->get();
 
     return view('laporan.keuangan', [
         'data' => $data,
         'range' => $range,
         'from' => $from,
         'to' => $to,
+        'period' => $period,
     ]);
 }
 
 public function exportLaporan(Request $request)
 {
-    $format = $request->input('format'); // 'pdf' atau 'excel'
+    $format = $request->input('format');
     $range = $request->input('range', 'bulanan');
     $from = $request->input('from');
     $to = $request->input('to');
 
-    $query = DB::table('orders')
-        ->select(DB::raw("DATE(order_date) as date"), DB::raw("SUM(total) as omzet"))
-        ->groupBy(DB::raw("DATE(order_date)"))
-        ->orderBy('date', 'asc');
+    $query = DB::table('orders');
+    $period = $range;
 
     if ($range === 'harian') {
-        $query->whereDate('order_date', now());
+        $query->selectRaw("DATE(order_date) as label, SUM(total) as total")
+              ->whereMonth('order_date', now()->month)
+              ->whereYear('order_date', now()->year)
+              ->groupByRaw("DATE(order_date)")
+              ->orderBy('label');
+
     } elseif ($range === 'mingguan') {
-        $query->whereBetween('order_date', [now()->startOfWeek(), now()->endOfWeek()]);
+        $query->selectRaw("YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total")
+              ->whereYear('order_date', now()->year)
+              ->groupByRaw("YEAR(order_date), WEEK(order_date, 1)")
+              ->orderBy('year')
+              ->orderBy('week');
+
     } elseif ($range === 'bulanan') {
-        $query->whereMonth('order_date', now()->month)->whereYear('order_date', now()->year);
+        $query->selectRaw("DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total")
+              ->whereYear('order_date', now()->year)
+              ->groupByRaw("DATE_FORMAT(order_date, '%Y-%m')")
+              ->orderBy('label');
+
     } elseif ($range === 'custom' && $from && $to) {
-        $query->whereBetween('order_date', [$from, $to]);
+        $query->selectRaw("DATE(order_date) as label, SUM(total) as total")
+              ->whereBetween('order_date', [$from, $to])
+              ->groupByRaw("DATE(order_date)")
+              ->orderBy('label');
+
+    } else {
+        $query->selectRaw("DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total")
+              ->whereYear('order_date', now()->year)
+              ->groupByRaw("DATE_FORMAT(order_date, '%Y-%m')")
+              ->orderBy('label');
+        $period = 'bulanan';
     }
 
     $data = $query->get();
 
     if ($format === 'pdf') {
-        $pdf = PDF::loadView('laporan.keuangan_pdf', compact('data'));
+        $pdf = PDF::loadView('laporan.keuangan_pdf', compact('data', 'range', 'from', 'to', 'period'));
         return $pdf->download('laporan-keuangan.pdf');
     } elseif ($format === 'excel') {
-        return Excel::download(new \App\Exports\LaporanKeuanganExport($data), 'laporan-keuangan.xlsx');
+        return Excel::download(new \App\Exports\LaporanKeuanganExport($data, $period), 'laporan-keuangan.xlsx');
     }
 
     return redirect()->back()->with('error', 'Format tidak dikenali.');

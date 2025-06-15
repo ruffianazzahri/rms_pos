@@ -7,15 +7,19 @@ use Maatwebsite\Excel\Concerns\FromView;
 
 class LaporanKeuanganExport implements FromView
 {
-    protected $data;
+    protected $data, $period;
 
-    public function __construct($data)
+    public function __construct($data, $period)
     {
         $this->data = $data;
+        $this->period = $period;
     }
 
     public function view(): View
     {
-        return view('laporan.keuangan_excel', ['data' => $this->data]);
+        return view('laporan.keuangan_excel', [
+            'data' => $this->data,
+            'period' => $this->period,
+        ]);
     }
 }
