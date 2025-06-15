@@ -10,6 +10,87 @@
 
     </div>
 
+    {{-- cetak --}}
+    <!-- Tombol Cetak -->
+    <button class="btn btn-info mb-3" data-toggle="modal" data-target="#modalRange">Cetak Laporan</button>
+
+    <!-- Modal 1: Pilih Jangka Waktu -->
+    <div class="modal fade" id="modalRange" tabindex="-1" role="dialog" aria-labelledby="modalRangeLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="form-range" onsubmit="event.preventDefault(); openModalType();">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Pilih Jangka Waktu</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="range" id="harian" value="harian">
+                            <label class="form-check-label" for="harian">Harian</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="range" id="mingguan" value="mingguan">
+                            <label class="form-check-label" for="mingguan">Mingguan</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="range" id="bulanan" value="bulanan">
+                            <label class="form-check-label" for="bulanan">Bulanan</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="range" id="custom" value="custom">
+                            <label class="form-check-label" for="custom">Custom Tanggal</label>
+                        </div>
+
+                        <div id="custom-date-range" class="mt-3" style="display: none;">
+                            <label>Dari Tanggal:</label>
+                            <input type="date" class="form-control mb-2" id="from-date">
+                            <label>Sampai Tanggal:</label>
+                            <input type="date" class="form-control" id="to-date">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Lanjut</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Pilih Format -->
+    <div class="modal fade" id="modalType" tabindex="-1" role="dialog" aria-labelledby="modalTypeLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <form id="form-export" method="GET" action="{{ route('laporan.keuangan.export') }}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Pilih Format Laporan</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="range" id="input-range">
+                        <input type="hidden" name="from" id="input-from">
+                        <input type="hidden" name="to" id="input-to">
+
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="format" id="format-pdf" value="pdf"
+                                required>
+                            <label class="form-check-label" for="format-pdf">PDF</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="format" id="format-excel" value="excel">
+                            <label class="form-check-label" for="format-excel">Excel</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Cetak</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- end of cetak --}}
     {{-- Form filter bulan & tahun --}}
     <form method="GET" action="{{ route('general_journal.index') }}" class="mb-3 row g-2 align-items-center">
         <div class="form-row align-items-end">
@@ -195,4 +276,51 @@
         });
     });
 </script>
+<script>
+    $(document).ready(function () {
+    // Tampilkan input tanggal jika pilih "custom"
+    $('input[name="range"]').change(function () {
+        if (this.value === 'custom') {
+            $('#custom-date-range').slideDown();
+        } else {
+            $('#custom-date-range').slideUp();
+        }
+    });
+
+    // Modal 1 submit → buka Modal 2
+    window.openModalType = function () {
+        const range = $('input[name="range"]:checked').val();
+
+        if (!range) {
+            alert('Silakan pilih jangka waktu laporan.');
+            return;
+        }
+
+        if (range === 'custom') {
+            const from = $('#from-date').val();
+            const to = $('#to-date').val();
+            if (!from || !to) {
+                alert('Tanggal From dan To harus diisi untuk custom range.');
+                return;
+            }
+            $('#input-from').val(from);
+            $('#input-to').val(to);
+        } else {
+            $('#input-from').val('');
+            $('#input-to').val('');
+        }
+
+        $('#input-range').val(range);
+        $('#modalRange').modal('hide');
+        $('#modalType').modal('show');
+    }
+
+    // Reset form saat modal ditutup
+    $('#modalRange, #modalType').on('hidden.bs.modal', function () {
+        $(this).find('form')[0].reset();
+        $('#custom-date-range').hide();
+    });
+});
+</script>
+
 @endsection

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\GeneralJournal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use PDF;
 
 class GeneralJournalController extends Controller
 {
@@ -175,6 +177,77 @@ class GeneralJournalController extends Controller
         ]);
     }
 
+    public function laporanKeuangan(Request $request)
+{
+    $range = $request->input('range', 'bulanan');
+    $from = $request->input('from');
+    $to = $request->input('to');
+
+    $query = DB::table('orders')
+        ->select(
+            DB::raw("DATE(order_date) as date"),
+            DB::raw("SUM(total) as omzet"),
+        )
+        ->groupBy(DB::raw("DATE(order_date)"))
+        ->orderBy('date', 'asc');
+
+    // Filter berdasarkan range
+    if ($range === 'harian') {
+        $query->whereDate('order_date', now());
+    } elseif ($range === 'mingguan') {
+        $query->whereBetween('order_date', [
+            now()->startOfWeek(), now()->endOfWeek()
+        ]);
+    } elseif ($range === 'bulanan') {
+        $query->whereMonth('order_date', now()->month)
+              ->whereYear('order_date', now()->year);
+    } elseif ($range === 'custom' && $from && $to) {
+        $query->whereBetween('order_date', [$from, $to]);
+    }
+
+    $data = $query->get();
+
+    return view('laporan.keuangan', [
+        'data' => $data,
+        'range' => $range,
+        'from' => $from,
+        'to' => $to,
+    ]);
+}
+
+public function exportLaporan(Request $request)
+{
+    $format = $request->input('format'); // 'pdf' atau 'excel'
+    $range = $request->input('range', 'bulanan');
+    $from = $request->input('from');
+    $to = $request->input('to');
+
+    $query = DB::table('orders')
+        ->select(DB::raw("DATE(order_date) as date"), DB::raw("SUM(total) as omzet"))
+        ->groupBy(DB::raw("DATE(order_date)"))
+        ->orderBy('date', 'asc');
+
+    if ($range === 'harian') {
+        $query->whereDate('order_date', now());
+    } elseif ($range === 'mingguan') {
+        $query->whereBetween('order_date', [now()->startOfWeek(), now()->endOfWeek()]);
+    } elseif ($range === 'bulanan') {
+        $query->whereMonth('order_date', now()->month)->whereYear('order_date', now()->year);
+    } elseif ($range === 'custom' && $from && $to) {
+        $query->whereBetween('order_date', [$from, $to]);
+    }
+
+    $data = $query->get();
+
+    if ($format === 'pdf') {
+        $pdf = PDF::loadView('laporan.keuangan_pdf', compact('data'));
+        return $pdf->download('laporan-keuangan.pdf');
+    } elseif ($format === 'excel') {
+        return Excel::download(new \App\Exports\LaporanKeuanganExport($data), 'laporan-keuangan.xlsx');
+    }
+
+    return redirect()->back()->with('error', 'Format tidak dikenali.');
+}
 
 
 

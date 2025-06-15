@@ -211,6 +211,11 @@ Route::get('/omzet/print/form', [OmzetController::class, 'print'])->name('omzet.
 //general journal
 Route::resource('general_journal', GeneralJournalController::class);
 
+//generaljournal>laporan keuangan
+Route::get('/laporan-keuangan', [GeneralJournalController::class, 'laporanKeuangan'])->name('laporan.keuangan');
+Route::get('/laporan-keuangan/export', [GeneralJournalController::class, 'exportLaporan'])->name('laporan.keuangan.export');
+
+
 // master pajak dan diskon
 
 Route::resource('master-charges', MasterChargeController::class);
