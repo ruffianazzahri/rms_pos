@@ -45,16 +45,24 @@
                 @endif
                 <hr>
                 @if (auth()->user()->can('pos.financial'))
-                <li class="{{ Request::is('general_journal*') ? 'active' : '' }}">
-                    <a href="{{ route('general_journal.index') }}" class="svg-icon">
+                <li class="{{ Request::is('financial_report*') ? 'active' : '' }}">
+                    <a href="{{ route('financial_report.index') }}" class="svg-icon">
                         <i class="fa-solid fa-book"></i>
-                        <span class="ml-3">laporan Penjualan</span>
+                        <span class="ml-3">Laporan Penjualan</span>
                     </a>
                 </li>
                 <li class="{{ Request::is('master-charges*') ? 'active' : '' }}">
                     <a href="{{ route('master-charges.index') }}" class="svg-icon">
                         <i class="fa-solid fa-percent"></i>
                         <span class="ml-3">Pajak / Diskon</span>
+                    </a>
+                </li>
+                @endif
+                @if (auth()->user()->can('pos.generaljournal'))
+                <li class="{{ Request::is('general_journal*') ? 'active' : '' }}">
+                    <a href="{{ route('general_journal.index') }}" class="svg-icon">
+                        <i class="fa-solid fa-book"></i>
+                        <span class="ml-3">Jurnal Umum</span>
                     </a>
                 </li>
                 @endif

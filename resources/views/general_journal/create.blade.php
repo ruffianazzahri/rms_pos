@@ -28,40 +28,68 @@
                 disabled>
             <input type="hidden" name="date" value="{{ old('date', $general_journal->date ?? date('Y-m-d')) }}">
         </div>
+        @php
+        $accounts = [
+        'Aset' => [
+        'Kas' => 'Kas',
+        'Bank' => 'Bank',
+        'Piutang Usaha' => 'Piutang Usaha',
+        'Persediaan Barang Dagang' => 'Persediaan Barang Dagang',
+        'Peralatan' => 'Peralatan',
+        'Aset Tetap Lainnya' => 'Aset Tetap Lainnya',
+        ],
+        'Liabilitas & Ekuitas' => [
+        'Utang Usaha' => 'Utang Usaha',
+        'Modal Pemilik' => 'Modal Pemilik',
+        'Prive' => 'Prive',
+        'Suntikan Dana' => 'Suntikan Dana',
+        ],
+        'Pendapatan' => [
+        'Penjualan' => 'Penjualan',
+        'Pendapatan Lain-lain' => 'Pendapatan Lain-lain',
+        'Diskon Penjualan' => 'Diskon Penjualan',
+        ],
+        'Beban' => [
+        'Harga Pokok Penjualan' => 'Harga Pokok Penjualan',
+        'Beban Operasional' => 'Beban Operasional',
+        'Beban Gaji' => 'Beban Gaji',
+        'Beban Listrik & Air' => 'Beban Listrik & Air',
+        'Beban Sewa' => 'Beban Sewa',
+        'Beban Transportasi' => 'Beban Transportasi',
+        'Beban Penyusutan' => 'Beban Penyusutan',
+        'Pengeluaran Tidak Terduga' => 'Pengeluaran Tidak Terduga',
+        ],
+        'Lain-lain' => [
+        'Uang Tip' => 'Uang Tip',
+        ],
+        ];
+
+        $selectedAccount = old('account', $general_journal->account ?? '');
+        @endphp
+
         <div class="form-group">
             <label>Akun</label>
-            <select name="account" class="form-control" required>
-                @php
-                $accounts = [
-                'Kas' => 'Kas',
-                'Bank' => 'Bank',
-                'Piutang Usaha' => 'Piutang Usaha',
-                'Pendapatan' => 'Pendapatan',
-                'Beban Operasional' => 'Beban Operasional',
-                'Suntikan Dana' => 'Suntikan Dana',
-                'Uang Tip' => 'Uang Tip',
-                'Pengeluaran Tidak Terduga' => 'Pengeluaran Tidak Terduga',
-                ];
-                $selectedAccount = old('account', $general_journal->account ?? '');
-                @endphp
-
+            <select name="account" id="account" class="form-control" required>
                 <option value="" disabled {{ $selectedAccount=='' ? 'selected' : '' }}>-- Pilih Akun --</option>
-                @foreach ($accounts as $key => $label)
-                <option value="{{ $key }}" {{ $selectedAccount==$key ? 'selected' : '' }}>{{ $label }}</option>
+                @foreach ($accounts as $group => $groupAccounts)
+                <optgroup label="{{ $group }}">
+                    @foreach ($groupAccounts as $key => $label)
+                    <option value="{{ $key }}" {{ $selectedAccount==$key ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </optgroup>
                 @endforeach
             </select>
         </div>
 
-
         <div class="form-group">
             <label>Pemasukan</label>
-            <input type="text" name="credit" class="form-control format-number"
+            <input type="text" name="credit" id="credit" class="form-control format-number"
                 value="{{ old('credit', $general_journal->credit ?? '') }}">
         </div>
 
         <div class="form-group">
             <label>Pengeluaran</label>
-            <input type="text" name="debit" class="form-control format-number"
+            <input type="text" name="debit" id="debit" class="form-control format-number"
                 value="{{ old('debit', $general_journal->debit ?? '') }}">
         </div>
 

@@ -21,6 +21,7 @@ use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Dashboard\CashierController;
 use App\Http\Controllers\Dashboard\ChartController;
 use App\Http\Controllers\Dashboard\OmzetController;
+use App\Http\Controllers\Dashboard\FinancialReportController;
 use App\Http\Controllers\Dashboard\GeneralJournalController;
 use App\Http\Controllers\Dashboard\MasterChargeController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -208,14 +209,15 @@ Route::get('/chart/orders', [ChartController::class, 'getOrdersChartData']);
 //omzet
 Route::get('/omzet/print/form', [OmzetController::class, 'print'])->name('omzet.print.form');
 
+//financial report
+Route::resource('financial_report', FinancialReportController::class);
+Route::get('/products-sale', [FinancialReportController::class, 'detailByProduk']);
+Route::get('/laporan-keuangan', [FinancialReportController::class, 'laporanKeuangan'])->name('laporan.keuangan');
+Route::get('/laporan-keuangan/export', [FinancialReportController::class, 'exportLaporan'])->name('laporan.keuangan.export');
+
+
 //general journal
 Route::resource('general_journal', GeneralJournalController::class);
-Route::get('/products-sale', [GeneralJournalController::class, 'detailByProduk']);
-
-//generaljournal>laporan keuangan
-Route::get('/laporan-keuangan', [GeneralJournalController::class, 'laporanKeuangan'])->name('laporan.keuangan');
-Route::get('/laporan-keuangan/export', [GeneralJournalController::class, 'exportLaporan'])->name('laporan.keuangan.export');
-
 
 // master pajak dan diskon
 

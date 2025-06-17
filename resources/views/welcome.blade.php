@@ -219,15 +219,19 @@
                 <img class="img-fluid" src="{{ asset('assets/images/logo2.png') }}" style="height: auto; width: 300px;"
                     alt="Login Image">
                 <h2 class="title">Selamat Datang di RMS POS</h2>
-                <div class="subtitle">
+                {{-- <div class="subtitle">
                     <span>Bikin transaksi jadi lebih mudah</span>
                     <div class="underline"></div>
-                </div>
+                </div> --}}
                 <p class="description">
                     RMS POS membantu UMKM, restoran, dan toko untuk mencatat penjualan, mengelola produk, dan
                     mempercepat proses transaksi harian.
                 </p>
+                <p class="text-muted small" style="margin-top: 10px">
+                    &copy; {{ date('Y') }} RMS POS – Rezekindo Makmur Sentosa. Semua hak cipta dilindungi.
+                </p>
             </div>
+
         </div>
         <div class="image-container"></div>
     </div>
