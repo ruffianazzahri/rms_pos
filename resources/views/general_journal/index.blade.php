@@ -2,19 +2,22 @@
 
 @section('container')
 <div class="container">
-    <div class="d-flex justify-content-between">
-        <h3>Laporan Penjualan</h3>
-        {{-- <a href="{{ route('general_journal.create') }}" class="btn btn-primary mb-3"><i
-                class="fas fa-plus-circle fa-2x"></i>
-            </i></a> --}}
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3">
+        <h3 class="mb-2 mb-md-0">Laporan Penjualan</h3>
 
-        {{-- cetak --}}
-        <!-- Tombol Cetak -->
-        <button class="btn btn-info mb-3" data-toggle="modal" data-target="#modalRange"><i class="fas fa-print"></i>
-            Cetak Laporan</button>
+        <div class="btn-group">
+            <!-- Tombol Cetak -->
+            <button class="btn btn-info mr-3" data-toggle="modal" data-target="#modalRange">
+                <i class="fas fa-print mr-1"></i> Cetak Laporan
+            </button>
 
-
+            <!-- Tombol Tampilkan Rincian -->
+            <button class="btn btn-primary" data-toggle="modal" data-target="#rincianModal" id="loadDetailBtn">
+                <i class="fas fa-list mr-1"></i> Tampilkan Rincian
+            </button>
+        </div>
     </div>
+
 
 
     <!-- Modal 1: Pilih Jangka Waktu -->
@@ -90,6 +93,39 @@
                     </div>
                 </div>
             </form>
+        </div>
+    </div>
+
+    {{-- Modal 3 --}}
+    <div class="modal fade" id="rincianModal" tabindex="-1" role="dialog" aria-labelledby="rincianModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Rincian Penjualan Produk</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered table-sm" id="rincianTable">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Tanggal</th>
+                                <th>Produk</th>
+                                <th>Qty</th>
+                                <th>Harga Satuan</th>
+                                <th>Service</th>
+                                <th>Pajak</th>
+                                <th>Total</th>
+                                <th>Deskripsi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -334,6 +370,55 @@
     $('#modalRange, #modalType').on('hidden.bs.modal', function () {
         $(this).find('form')[0].reset();
         $('#custom-date-range').hide();
+    });
+});
+</script>
+<script>
+    $(document).ready(function () {
+    $('#loadDetailBtn').click(function () {
+        $.ajax({
+            url: '/products-sale',
+            method: 'GET',
+            data: {
+                month: '{{ $filterMonth }}',
+                year: '{{ $filterYear }}'
+            },
+            success: function (response) {
+                const tbody = $('#rincianTable tbody');
+                tbody.empty();
+
+                // Loop data produk
+                response.data.forEach(function (item, index) {
+                    const row = `
+                        <tr>
+                            <td>${item.order_id ?? '-'}</td>
+                            <td>${item.date ?? '-'}</td>
+                            <td>${item.product}</td>
+                            <td>${item.quantity}</td>
+                            <td>Rp ${parseInt(item.sale_total).toLocaleString('id-ID')}</td>
+                            <td>Rp ${parseInt(item.service_charge).toLocaleString('id-ID')}</td>
+                            <td>Rp ${parseInt(item.tax).toLocaleString('id-ID')}</td>
+                            <td>Rp ${parseInt(item.total).toLocaleString('id-ID')}</td>
+                            <td>${item.description}</td>
+                        </tr>`;
+                    tbody.append(row);
+                });
+
+                // Tambah baris total keseluruhan
+                const totalRow = `
+                    <tr class="font-weight-bold bg-light">
+                        <td colspan="7" class="text-right">Total</td>
+                        <td colspan="2">Rp ${parseInt(response.grand_total).toLocaleString('id-ID')}</td>
+                    </tr>`;
+                tbody.append(totalRow);
+
+                // Tampilkan modal
+                $('#rincianModal').modal('show');
+            },
+            error: function () {
+                alert("Gagal mengambil data!");
+            }
+        });
     });
 });
 </script>

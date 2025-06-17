@@ -167,7 +167,10 @@ class GeneralJournalController extends Controller
         $totalTax = DB::select($totalTaxQuery, [$month, $year])[0]->total_tax;
 
         // Total pemasukan = credit orders + pajak
-        $totalPemasukan = $totalCreditOrders + $totalTax;
+        //$totalPemasukan = $totalCreditOrders + $totalTax;
+
+        $totalPemasukan = $totalCreditOrders;
+
 
         return view('general_journal.index', [
             'journals' => $journals,
@@ -176,6 +179,89 @@ class GeneralJournalController extends Controller
             'filterYear' => $year,
         ]);
     }
+
+public function detailByProduk(Request $request)
+{
+    $month = $request->input('month', date('m'));
+    $year = $request->input('year', date('Y'));
+
+    $rawQuery = "
+WITH latest_charges AS (
+    SELECT
+        MAX(CASE WHEN type = 'service' THEN percentage END) AS service_pct,
+        MAX(CASE WHEN type = 'tax' THEN percentage END) AS tax_pct
+    FROM master_charges
+),
+grouped_data AS (
+    SELECT
+        DATE(o.order_date) AS raw_date,
+        p.product_name AS product,
+        SUM(od.quantity) AS quantity,
+        SUM(od.unitcost) AS sale_total
+    FROM orders o
+    LEFT JOIN order_details od ON od.order_id = o.id
+    LEFT JOIN products p ON p.id = od.product_id
+    WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+    GROUP BY DATE(o.order_date), p.product_name
+),
+localized_dates AS (
+    SELECT
+        raw_date,
+        product,
+        quantity,
+        sale_total,
+        DAY(raw_date) AS day,
+        MONTH(raw_date) AS month_num,
+        YEAR(raw_date) AS year,
+        CASE MONTH(raw_date)
+            WHEN 1 THEN 'Januari'
+            WHEN 2 THEN 'Februari'
+            WHEN 3 THEN 'Maret'
+            WHEN 4 THEN 'April'
+            WHEN 5 THEN 'Mei'
+            WHEN 6 THEN 'Juni'
+            WHEN 7 THEN 'Juli'
+            WHEN 8 THEN 'Agustus'
+            WHEN 9 THEN 'September'
+            WHEN 10 THEN 'Oktober'
+            WHEN 11 THEN 'November'
+            WHEN 12 THEN 'Desember'
+        END AS month_name
+    FROM grouped_data
+)
+SELECT
+    NULL AS order_id,
+    CONCAT(ld.day, ' ', ld.month_name, ' ', ld.year) AS date,
+    ld.product,
+    ld.quantity,
+    ld.sale_total,
+    ROUND(ld.sale_total * lc.service_pct / 100, 0) AS service_charge,
+    ROUND((ld.sale_total + ld.sale_total * lc.service_pct / 100) * lc.tax_pct / 100, 0) AS tax,
+    ROUND(
+        ld.sale_total + ld.sale_total * lc.service_pct / 100 +
+        (ld.sale_total + ld.sale_total * lc.service_pct / 100) * lc.tax_pct / 100, 0
+    ) AS total,
+    'Omzet Penjualan (Termasuk PBJT 10% dan Service Charge)' AS description,
+    ld.raw_date AS sale_date
+FROM localized_dates ld, latest_charges lc
+ORDER BY ld.raw_date ASC, ld.product ASC
+LIMIT 100;
+
+    ";
+
+    $details = collect(DB::select($rawQuery, [$month, $year]));
+
+    $grandTotal = $details->sum('total');
+
+    return response()->json([
+        'data' => $details,
+        'grand_total' => $grandTotal,
+    ]);
+}
+
+
+
+
 
 public function laporanKeuangan(Request $request)
 {

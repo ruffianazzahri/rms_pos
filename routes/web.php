@@ -210,6 +210,7 @@ Route::get('/omzet/print/form', [OmzetController::class, 'print'])->name('omzet.
 
 //general journal
 Route::resource('general_journal', GeneralJournalController::class);
+Route::get('/products-sale', [GeneralJournalController::class, 'detailByProduk']);
 
 //generaljournal>laporan keuangan
 Route::get('/laporan-keuangan', [GeneralJournalController::class, 'laporanKeuangan'])->name('laporan.keuangan');
