@@ -3,7 +3,7 @@
 @section('container')
 <div class="container">
     <div class="d-flex justify-content-between">
-        <h3>Laporan Keuangan</h3>
+        <h3>Laporan Penjualan</h3>
         {{-- <a href="{{ route('general_journal.create') }}" class="btn btn-primary mb-3"><i
                 class="fas fa-plus-circle fa-2x"></i>
             </i></a> --}}
