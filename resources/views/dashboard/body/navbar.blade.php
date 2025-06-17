@@ -1,6 +1,7 @@
 <div class="iq-top-navbar" style="background-color: #F3C623; width:100%">
     <div class="iq-navbar-custom">
         <nav class="navbar navbar-expand-lg navbar-light p-0">
+            <div id="datetime" class="ml-auto text-muted small font-weight-bold"></div>
             {{-- <div class="iq-navbar-logo d-flex align-items-center justify-content-between">
                 <i class="ri-menu-line wrapper-menu"></i>
                 <a href="{{ route('dashboard') }}" class="header-logo">

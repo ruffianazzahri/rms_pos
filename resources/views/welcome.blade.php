@@ -7,6 +7,8 @@
     <title>RMS POS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}" />
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -44,7 +46,7 @@
         .section-indicator {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
 
         .vertical-text {
@@ -60,7 +62,7 @@
         .divider {
             width: 1px;
             height: 2rem;
-            background-color: rgba(255, 193, 7, 0.5);
+            background-color: rgba(255, 111, 60, 0.8);
             margin: 0.5rem 0;
         }
 
@@ -68,7 +70,7 @@
             font-size: 8rem;
             font-weight: 300;
             line-height: 0.8;
-            color: rgba(255, 111, 60, 0.8);
+            color: rgba(255, 193, 7, 0.8);
         }
 
         .main-content {
@@ -214,6 +216,8 @@
             </div>
 
             <div class="main-content">
+                <img class="img-fluid" src="{{ asset('assets/images/logo2.png') }}" style="height: auto; width: 300px;"
+                    alt="Login Image">
                 <h2 class="title">Selamat Datang di RMS POS</h2>
                 <div class="subtitle">
                     <span>Bikin transaksi jadi lebih mudah</span>

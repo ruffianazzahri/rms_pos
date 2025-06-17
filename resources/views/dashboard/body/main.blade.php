@@ -57,6 +57,31 @@
     <script src="{{ asset('assets/vendor/fontawesome/js/regular.js') }}"></script>
     <script src="{{ asset('assets/vendor/fontawesome/js/solid.js') }}"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const monthNames = [
+        'Januari','Februari','Maret','April','Mei','Juni',
+        'Juli','Agustus','September','Oktober','November','Desember'
+    ];
+
+    function updateDateTime() {
+        const now = new Date();
+        const day = dayNames[now.getDay()];
+        const date = now.getDate();
+        const month = monthNames[now.getMonth()];
+        const year = now.getFullYear();
+
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+
+        const fullDate = `${day}, ${date} ${month} ${year} - ${hours}:${minutes}:${seconds}`;
+        document.getElementById("datetime").innerText = fullDate;
+    }
+
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+    </script>
 
     @yield('scripts')
 
