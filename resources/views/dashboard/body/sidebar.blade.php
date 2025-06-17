@@ -48,7 +48,7 @@
                 <li class="{{ Request::is('general_journal*') ? 'active' : '' }}">
                     <a href="{{ route('general_journal.index') }}" class="svg-icon">
                         <i class="fa-solid fa-book"></i>
-                        <span class="ml-3">laporan Keuangan</span>
+                        <span class="ml-3">laporan Penjualan</span>
                     </a>
                 </li>
                 <li class="{{ Request::is('master-charges*') ? 'active' : '' }}">

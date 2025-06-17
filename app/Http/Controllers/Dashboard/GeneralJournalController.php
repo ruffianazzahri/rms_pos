@@ -137,7 +137,7 @@ class GeneralJournalController extends Controller
                 'Pendapatan (Orders)' AS account,
                 0 AS debit,
                 SUM(o.total) AS credit,
-                'Omzet Penjualan' AS description,
+                'Omzet Penjualan (Termasuk PBJT 10% dan Service Charge)' AS description,
                 NULL AS invoice_no,
                 NULL AS order_date,
                 'Otomatis dari data orders' AS image
