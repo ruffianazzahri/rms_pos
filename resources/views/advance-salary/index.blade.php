@@ -23,7 +23,7 @@
                     <a href="{{ route('advance-salary.create') }}" class="btn btn-primary add-list"><i
                             class="fas fa-plus mr-3"></i></i>Create Advance Salary</a>
                     <a href="{{ route('advance-salary.index') }}" class="btn btn-danger add-list"><i
-                            class="fa-solid fa-trash mr-3"></i>Clear Search</a>
+                            class="fa-solid fa-trash mr-3"></i>Hapus Pencarian</a>
                 </div>
             </div>
         </div>

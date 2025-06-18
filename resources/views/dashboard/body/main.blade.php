@@ -52,11 +52,11 @@
     @yield('specificpagescripts')
 
     <!-- App JavaScript -->
+
     <script src="{{ asset('assets/js/app.js') }}"></script>
     <script src="{{ asset('assets/vendor/fontawesome/js/fontawesome.js') }}"></script>
     <script src="{{ asset('assets/vendor/fontawesome/js/regular.js') }}"></script>
     <script src="{{ asset('assets/vendor/fontawesome/js/solid.js') }}"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script>
         const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
     const monthNames = [
@@ -82,6 +82,9 @@
     setInterval(updateDateTime, 1000);
     updateDateTime();
     </script>
+
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 
     @yield('scripts')
 

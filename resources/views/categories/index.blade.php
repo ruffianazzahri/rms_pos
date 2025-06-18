@@ -23,7 +23,7 @@
                     <a href="{{ route('categories.create') }}" class="btn btn-primary add-list"><i
                             class="fas fa-plus mr-3"></i>Create Category</a>
                     <a href="{{ route('categories.index') }}" class="btn btn-danger add-list"><i
-                            class="fa-solid fa-trash mr-3"></i>Clear Search</a>
+                            class="fa-solid fa-trash mr-3"></i>Hapus Pencarian</a>
                 </div>
             </div>
         </div>

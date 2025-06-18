@@ -18,7 +18,7 @@
                 </div>
                 <div>
                     <a href="{{ route('order.pendingDue') }}" class="btn btn-danger add-list"><i
-                            class="fa-solid fa-trash mr-3"></i>Clear Search</a>
+                            class="fa-solid fa-trash mr-3"></i>Hapus Pencarian</a>
                 </div>
             </div>
         </div>

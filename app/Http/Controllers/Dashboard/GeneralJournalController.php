@@ -207,4 +207,40 @@ public function index()
 
         return redirect()->route('general_journal.index')->with('success', 'Journal deleted successfully.');
     }
+
+public function print(Request $request)
+{
+    $request->validate([
+        'year' => 'required|integer|min:2000|max:' . date('Y'),
+        'month' => 'required|integer|min:1|max:12',
+    ]);
+
+    $year = $request->year;
+    $month = $request->month;
+
+    // Ambil data jurnal sesuai bulan dan tahun
+    $journals = GeneralJournal::whereYear('date', $year)
+        ->whereMonth('date', $month)
+        ->orderBy('date')
+        ->get();
+
+    // Hitung total debit dan kredit
+    $totalDebit = $journals->sum('debit');
+    $totalCredit = $journals->sum('credit');
+
+    // Saldo akhir = total debit - total kredit
+    $endingBalance = $totalCredit - $totalDebit;
+
+    // Kirim ke view PDF
+    $pdf = Pdf::loadView('general_journal.print_pdf', [
+        'journals' => $journals,
+        'year' => $year,
+        'month' => $month,
+        'totalDebit' => $totalDebit,
+        'totalCredit' => $totalCredit,
+        'endingBalance' => $endingBalance,
+    ]);
+
+    return $pdf->stream("jurnal-{$month}-{$year}.pdf");
+}
 }

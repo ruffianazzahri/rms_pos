@@ -14,11 +14,11 @@
             @endif
             <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
                 <div>
-                    <h4 class="mb-3">Complete Order List</h4>
+                    <h4 class="mb-3">Daftar Pesanan Selesai</h4>
                 </div>
                 <div>
                     <a href="{{ route('order.pendingOrders') }}" class="btn btn-danger add-list"><i
-                            class="fa-solid fa-trash mr-3"></i>Clear Search</a>
+                            class="fa-solid fa-trash mr-3"></i>Hapus Pencarian</a>
                 </div>
             </div>
         </div>

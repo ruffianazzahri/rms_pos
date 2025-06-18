@@ -218,6 +218,10 @@ Route::get('/laporan-keuangan/export', [FinancialReportController::class, 'expor
 
 //general journal
 Route::resource('general_journal', GeneralJournalController::class);
+// routes/web.php
+Route::post('/general-journal/print', [GeneralJournalController::class, 'print'])->name('general_journal.print');
+
+
 
 // master pajak dan diskon
 
