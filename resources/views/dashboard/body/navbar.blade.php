@@ -55,18 +55,34 @@
                                             <img src="{{ auth()->user()->photo ? asset('storage/profile/'.auth()->user()->photo) : asset('assets/images/user/1.png') }}"
                                                 alt="profile-img" class="rounded profile-img img-fluid avatar-70">
                                         </div>
-                                        <div class="p-3">
+                                        <div class="p-3 text-center">
                                             <h5 class="mb-1">{{ auth()->user()->name }}</h5>
                                             <p class="mb-0">Since {{ date('d M, Y',
                                                 strtotime(auth()->user()->created_at)) }}</p>
-                                            <div class="d-flex align-items-center justify-content-center mt-3">
-                                                <a href="{{ route('profile') }}" class="btn border mr-2">Profile</a>
-                                                <form action="{{ route('logout') }}" method="POST">
-                                                    @csrf
-                                                    <button type="submit" class="btn border">Sign Out</button>
-                                                </form>
+
+                                            <div class="p-3 text-center">
+                                                <h5 class="mb-1">{{ auth()->user()->name }}</h5>
+                                                <p class="mb-0">Since {{ date('d M, Y',
+                                                    strtotime(auth()->user()->created_at)) }}</p>
+
+                                                <div class="d-flex justify-content-between mt-3 gap-2">
+                                                    <a href="{{ route('profile') }}"
+                                                        class="btn btn-outline-primary mr-3 d-flex align-items-center justify-content-center flex-fill">
+                                                        <i class="fas fa-user me-2"></i> Profile
+                                                    </a>
+                                                    <form action="{{ route('logout') }}" method="POST"
+                                                        class="flex-fill m-0">
+                                                        @csrf
+                                                        <button type="submit"
+                                                            class="btn btn-outline-danger d-flex align-items-center justify-content-center w-100">
+                                                            <i class="fas fa-sign-out-alt me-2"></i> Sign Out
+                                                        </button>
+                                                    </form>
+                                                </div>
                                             </div>
+
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
