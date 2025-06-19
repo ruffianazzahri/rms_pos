@@ -36,18 +36,55 @@
             </div>
 
             @foreach($products as $product)
-            <button class="add-item" data-id="{{ $product->id }}" data-name="{{ $product->product_name }}"
-                data-price="{{ $product->selling_price }}">
+            <style>
+                .product-button {
+                    transition: all 0.3s ease;
+                    border-radius: 15px;
+                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                    background-color: #FFB22C !important;
+                    border: 1px solid #dee2e6;
+                }
 
-                {{-- Tampilkan gambar produk --}}
+                .product-button:hover {
+                    background-color: #ffd48a !important;
+                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+                    transform: translateY(-3px) scale(1.02);
+                }
+
+                .product-button:active {
+                    transform: scale(0.98);
+                    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+                }
+
+                .product-image {
+                    width: 100px;
+                    height: 100px;
+                    object-fit: cover;
+                    border-radius: 10px;
+                    display: block;
+                    margin: 0 auto 5px;
+                }
+
+                .product-name {
+                    font-weight: 500;
+                }
+
+                .product-price {
+                    font-size: 0.85rem;
+                    color: #6c757d;
+                }
+            </style>
+
+            <button class="btn product-button text-center w-100 mb-3 add-item" data-id="{{ $product->id }}"
+                data-name="{{ $product->product_name }}" data-price="{{ $product->selling_price }}">
+
                 <img src="{{ $product->product_image ? asset('storage/products/' . $product->product_image) : asset('assets/images/product/default.webp') }}"
-                    alt="{{ $product->product_name }}"
-                    style="width: 100px; height: 100px; object-fit: cover; border-radius: 10px; display: block; margin: 0 auto 5px;">
+                    alt="{{ $product->product_name }}" class="product-image">
 
-                {{-- Nama dan harga --}}
-                {{ $product->product_name }}<br>
-                <small>Rp {{ number_format($product->selling_price) }}</small>
+                <div class="product-name">{{ $product->product_name }}</div>
+                <div class="product-price">Rp {{ number_format($product->selling_price) }}</div>
             </button>
+
             @endforeach
         </div>
     </div>
@@ -56,7 +93,60 @@
     {{-- Keranjang --}}
     <div class="cart">
         <h4>🛒 Keranjang</h4>
-        <table class="table table-bordered" id="cart-table">
+        <style>
+            #cart-table {
+                background-color: #fff8e1;
+                /* Lembut */
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            }
+
+            #cart-table thead {
+                background: linear-gradient(to right, #FB9E3A, #E6521F);
+                color: #ffffff;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            #cart-table th,
+            #cart-table td {
+                vertical-align: middle !important;
+                text-align: center;
+                padding: 12px;
+                font-size: 0.95rem;
+            }
+
+            #cart-table tbody tr:hover {
+                background-color: #fcef91;
+                /* Hover kuning lembut */
+                transition: background-color 0.3s ease;
+            }
+
+            #cart-table td:nth-child(3) {
+                font-weight: bold;
+                color: #EA2F14;
+                /* Subtotal oranye-merah */
+            }
+
+            .btn-action {
+                background-color: #FB9E3A;
+                border: none;
+                color: white;
+                padding: 6px 10px;
+                border-radius: 6px;
+                font-size: 0.85rem;
+                transition: 0.2s;
+            }
+
+            .btn-action:hover {
+                background-color: #EA2F14;
+                box-shadow: 0 4px 12px rgba(234, 47, 20, 0.3);
+                transform: scale(1.05);
+            }
+        </style>
+
+        <table class="table table-bordered table-hover mb-0" id="cart-table">
             <thead>
                 <tr>
                     <th>Item</th>
@@ -67,9 +157,10 @@
             </thead>
             <tbody></tbody>
         </table>
+
         <input type="hidden" id="tax-percentage" value="{{ $restaurant_tax }}">
         <input type="hidden" id="service-percentage" value="{{ $service_charge }}">
-        <h5>Subtotal: Rp <span id="total">0</span></h5>
+        <h5 class="mt-3">Subtotal: Rp <span id="total">0</span></h5>
         <h5>Jasa Pelayanan (10%): Rp <span id="service-amount">0</span></h5>
         <h5>Pajak Restoran (10%): Rp <span id="tax-amount">0</span></h5>
         <h5>Total Bayar: Rp <span id="grand-total"></span></h5>
@@ -438,7 +529,9 @@
                     <td>${item.name}</td>
                     <td>${item.qty}</td>
                     <td>Rp ${item.subtotal.toLocaleString()}</td>
-                    <td><button onclick="removeItem(${index})">Hapus</button></td>
+                    <td><button class="btn-action btn btn-lg" onclick="removeItem(${index})" title="Hapus item">
+                        <i class="fa fa-2x fa-trash"></i>
+                    </button></td>
                 </tr>`;
         });
 
