@@ -138,12 +138,12 @@
                 @endif
 
                 <hr>
-                <li class="{{ Request::is('customers_vip*') ? 'active' : '' }}">
+                {{-- <li class="{{ Request::is('customers_vip*') ? 'active' : '' }}">
                     <a href="{{ route('customers_vip.index') }}" class="svg-icon">
                         <i class="fa-solid fa-users"></i>
                         <span class="ml-3">Customers (VIP)</span>
                     </a>
-                </li>
+                </li> --}}
                 {{--
                 @if (auth()->user()->can('employee.menu'))
                 <li class="{{ Request::is('employees*') ? 'active' : '' }}">

@@ -56,14 +56,16 @@
                                                 alt="profile-img" class="rounded profile-img img-fluid avatar-70">
                                         </div>
                                         <div class="p-3 text-center">
-                                            <h5 class="mb-1">{{ auth()->user()->name }}</h5>
+                                            {{-- <h5 class="mb-1">{{ auth()->user()->name }}</h5>
                                             <p class="mb-0">Since {{ date('d M, Y',
-                                                strtotime(auth()->user()->created_at)) }}</p>
+                                                strtotime(auth()->user()->created_at)) }}</p> --}}
 
                                             <div class="p-3 text-center">
                                                 <h5 class="mb-1">{{ auth()->user()->name }}</h5>
-                                                <p class="mb-0">Since {{ date('d M, Y',
-                                                    strtotime(auth()->user()->created_at)) }}</p>
+                                                <p class="mb-0">Akun dibuat: {{
+                                                    \Carbon\Carbon::parse(auth()->user()->created_at)->translatedFormat('d
+                                                    F Y') }}</p>
+
 
                                                 <div class="d-flex justify-content-between mt-3 gap-2">
                                                     <a href="{{ route('profile') }}"
