@@ -10,9 +10,9 @@
             <img src="{{ asset('assets/images/logo.png') }}" class="img-fluid rounded-normal light-logo" alt="logo">
             <h5 class="logo-title light-logo ml-3">RMS POS</h5>
         </a>
-        <div class="iq-menu-bt-sidebar ml-0">
+        {{-- <div class="iq-menu-bt-sidebar ml-0">
             <i class="las la-bars wrapper-menu"></i>
-        </div>
+        </div> --}}
     </div>
     <div class="data-scrollbar" data-scroll="1">
         <nav class="iq-sidebar-menu">
@@ -138,6 +138,12 @@
                 @endif
 
                 <hr>
+                <li class="{{ Request::is('customers_vip*') ? 'active' : '' }}">
+                    <a href="{{ route('customers_vip.index') }}" class="svg-icon">
+                        <i class="fa-solid fa-users"></i>
+                        <span class="ml-3">Customers (VIP)</span>
+                    </a>
+                </li>
                 {{--
                 @if (auth()->user()->can('employee.menu'))
                 <li class="{{ Request::is('employees*') ? 'active' : '' }}">

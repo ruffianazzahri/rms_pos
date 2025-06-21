@@ -137,17 +137,19 @@ class CustomerVipController extends Controller
 
     // app/Http/Controllers/CustomerVipController.php
 
-    public function scan($uid)
+    public function scan()
     {
+        $uid = request()->get('uid'); // ambil dari query string
+
         $customer = CustomerVip::where('uid', $uid)->first();
 
         if ($customer) {
             return response()->json([
                 'success' => true,
-                'member' => [
+                'data' => [
                     'id' => $customer->id,
-                    'name' => $customer->name,
-                    'balance' => $customer->balance,
+                    'nama' => $customer->name,
+                    'saldo' => $customer->balance,
                 ]
             ]);
         } else {
@@ -157,4 +159,5 @@ class CustomerVipController extends Controller
             ]);
         }
     }
+
 }
