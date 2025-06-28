@@ -144,15 +144,15 @@
                         <span class="ml-3">Customers (VIP)</span>
                     </a>
                 </li> --}}
-                {{--
-                @if (auth()->user()->can('employee.menu'))
+
+                {{-- @if (auth()->user()->can('employee.menu'))
                 <li class="{{ Request::is('employees*') ? 'active' : '' }}">
                     <a href="{{ route('employees.index') }}" class="svg-icon">
                         <i class="fa-solid fa-users"></i>
                         <span class="ml-3">Employees</span>
                     </a>
                 </li>
-                @endif
+                @endif --}}
                 @if (auth()->user()->can('customer.menu'))
 
                 <li class="{{ Request::is('customers_vip*') ? 'active' : '' }}">
@@ -160,7 +160,9 @@
                         <i class="fa-solid fa-users"></i>
                         <span class="ml-3">Customers (VIP)</span>
                     </a>
-                </li> --}}
+                </li>
+
+                @endif
 
                 {{-- Customers Biasa --}}
                 {{-- @if (auth()->user()->can('customer.menu'))

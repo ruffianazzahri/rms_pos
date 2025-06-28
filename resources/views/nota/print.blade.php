@@ -95,8 +95,9 @@
         <div class="flex"><span>Total Item:</span><span>{{ $order->total_products }}</span></div>
         <div class="flex"><span>Subtotal:</span><span>Rp{{ number_format($subtotal, 0, ',', '.') }}</span></div>
         <div class="flex"><span>Pajak (10%):</span><span>Rp{{ number_format($vat, 0, ',', '.') }}</span></div>
-        <div class="flex"><span>Jasa Pelayanan (10%):</span><span>Rp{{ number_format($service, 0, ',', '.') }}</span>
-        </div>
+        {{-- <div class="flex"><span>Jasa Pelayanan (10%):</span><span>Rp{{ number_format($service, 0, ',', '.')
+                }}</span>
+        </div> --}}
         <div class="flex bold"><span>Total Bayar:</span><span>Rp{{ number_format($grandTotal, 0, ',', '.') }}</span>
         </div>
     </div>

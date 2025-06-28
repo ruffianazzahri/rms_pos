@@ -134,8 +134,8 @@
                                             <button type="submit" class="btn btn-primary mt-2">Login</button>
 
                                             <div class="d-flex justify-content-between mt-3">
-                                                <a href="{{ route('register') }}" class="text-primary">Belum punya
-                                                    akun?</a>
+                                                {{-- <a href="{{ route('register') }}" class="text-primary">Belum punya
+                                                    akun?</a> --}}
                                                 <a href="{{ route('password.request') }}" class="text-primary">Lupa
                                                     Password?</a>
                                             </div>

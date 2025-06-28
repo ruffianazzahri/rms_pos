@@ -161,7 +161,7 @@
         <input type="hidden" id="tax-percentage" value="{{ $restaurant_tax }}">
         <input type="hidden" id="service-percentage" value="{{ $service_charge }}">
         <h5 class="mt-3">Subtotal: Rp <span id="total">0</span></h5>
-        <h5>Jasa Pelayanan (10%): Rp <span id="service-amount">0</span></h5>
+        <h5 class="d-none">Jasa Pelayanan (10%): Rp <span id="service-amount">0</span></h5>
         <h5>Pajak Restoran (10%): Rp <span id="tax-amount">0</span></h5>
         <h5>Total Bayar: Rp <span id="grand-total"></span></h5>
         {{-- Pembayaran --}}
@@ -169,8 +169,7 @@
             @csrf
             <div class="mb-2">
                 <label>Apakah mempunyai member?</label><br>
-                <button type="button" class="btn btn-success btn-sm"
-                    onclick="alert('Fitur ini segera hadir!')">Iya</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="handleMember(true)">Iya</button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="handleMember(false)">Tidak</button>
             </div>
 
@@ -185,7 +184,7 @@
     </div>
     <input type="hidden" name="items" id="items-input">
     <label for="method">Metode Pembayaran:</label>
-    <select name="method" class="form-control" required>
+    <select name="method" class="form-control" required id="method">
         <option value="cash" selected>Cash</option>
         <option value="qris">QRIS</option>
         <option value="debit">Debit</option>
@@ -406,20 +405,20 @@
                     return;
                 }
 
-            const totalAkhir = order.total + pajak + jasa;
+            const totalAkhir = order.total; // karena sudah termasuk pajak
 
             if (method === 'cash') {
-                kembalian = uangDiterima - order.total;
+                kembalian = uangDiterima - totalAkhir;
             }
+
+            console.log(['uang diterima', uangDiterima, 'kembalian', kembalian, 'totalakhir', totalAkhir]);
 
             let html = `
             <p><strong>Invoice:</strong> ${order.invoice_no}</p>
             <p><strong>Tanggal:</strong> ${new Date(order.order_date).toLocaleString()}</p>
             <p><strong>Total Produk:</strong> ${order.total_products}</p>
-            <p><strong>Total Harga:</strong> Rp ${order.total.toLocaleString()}</p>
             <p><strong>Pajak:</strong> Rp ${pajak.toLocaleString()}</p>
-            <p><strong>Jasa:</strong> Rp ${jasa.toLocaleString()}</p>
-            <p><strong>Total Akhir:</strong> Rp ${totalAkhir.toLocaleString()}</p>
+            <p><strong>Total Harga:</strong> Rp ${order.total.toLocaleString()}</p>
             <p><strong>Status Pembayaran:</strong> ${order.payment_status}</p>
             `;
 
@@ -527,33 +526,55 @@
             cartTableBody.innerHTML += `
                 <tr>
                     <td>${item.name}</td>
-                    <td>${item.qty}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="decreaseQty(${index})" title="Kurangi qty">
+                            <i class="fa fa-minus"></i>
+                        </button>
+                        <span class="mx-2">${item.qty}</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="increaseQty(${index})" title="Tambah qty">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                    </td>
                     <td>Rp ${item.subtotal.toLocaleString()}</td>
-                    <td><button class="btn-action btn btn-lg" onclick="removeItem(${index})" title="Hapus item">
-                        <i class="fa fa-2x fa-trash"></i>
-                    </button></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="removeItem(${index})" title="Hapus item">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </td>
                 </tr>`;
         });
 
-        // Ambil persen pajak dan service dari input hidden
+        // Pajak
         const taxPercentage = parseFloat(document.getElementById("tax-percentage").value) || 0;
-        const servicePercentage = parseFloat(document.getElementById("service-percentage").value) || 0;
-
-        // === Hitung sesuai urutan yang benar ===
-        const serviceAmount = subtotal * servicePercentage / 100;
-        const baseForTax = subtotal + serviceAmount;
+        const baseForTax = subtotal;
         const taxAmount = baseForTax * taxPercentage / 100;
         const grandTotal = baseForTax + taxAmount;
 
-        // Tampilkan hasil
+        // Update tampilan
         totalDisplay.innerText = subtotal.toLocaleString();
-        document.getElementById("service-amount").innerText = serviceAmount.toLocaleString();
         document.getElementById("tax-amount").innerText = taxAmount.toLocaleString();
         document.getElementById("grand-total").innerText = grandTotal.toLocaleString();
 
-        // Simpan data cart ke input hidden
+        // Simpan cart ke input hidden
         itemsInput.value = JSON.stringify(cart);
     }
+
+        function increaseQty(index) {
+        cart[index].qty += 1;
+        cart[index].subtotal = cart[index].qty * cart[index].price;
+        renderCart();
+    }
+
+    function decreaseQty(index) {
+        if (cart[index].qty > 1) {
+            cart[index].qty -= 1;
+            cart[index].subtotal = cart[index].qty * cart[index].price;
+        } else {
+            cart.splice(index, 1); // Hapus item jika qty tinggal 1
+        }
+        renderCart();
+    }
+
 
     function removeItem(index) {
         cart.splice(index, 1);
@@ -567,7 +588,7 @@
 </script>
 <script>
     document.getElementById('closeDetailModal').addEventListener('click', function () {
-        console.log(123);
+    console.log(123);
     document.activeElement.blur(); // Lepaskan focus
     $('#detailModal').modal('hide');
     setTimeout(() => location.reload(), 500);
@@ -580,31 +601,27 @@
     const methodSelect = document.querySelector('select[name="method"]');
     const cashReceived = document.getElementById('cash-received');
     const changeInput = document.getElementById('cash-change');
-    const subtotalInput = document.getElementById('subtotal-amount'); // ⬅️ Tambahkan input ini di HTML
-    const servicePercentageInput = document.getElementById('service-percentage');
+    const subtotalInput = document.getElementById('subtotal-amount');
+    //const servicePercentageInput = document.getElementById('service-percentage');
     const taxPercentageInput = document.getElementById('tax-percentage');
 
-    // Ambil nilai dengan aman
     const pay = cashReceived?.value ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0 : 0;
     const change = changeInput?.value ? parseInt(changeInput.value.replace(/[^\d]/g, '')) || 0 : 0;
     const method = methodSelect?.value || 'Tidak diketahui';
 
     const subtotal = subtotalInput?.value ? parseInt(subtotalInput.value.replace(/[^\d]/g, '')) || 0 : 0;
-    const servicePercent = servicePercentageInput?.value ? parseFloat(servicePercentageInput.value) || 0 : 0;
+    //const servicePercent = servicePercentageInput?.value ? parseFloat(servicePercentageInput.value) || 0 : 0;
     const taxPercent = taxPercentageInput?.value ? parseFloat(taxPercentageInput.value) || 0 : 0;
 
-    // Hitung ulang sesuai rumus yang benar
-    const serviceAmount = Math.round(subtotal * servicePercent / 100);
-    const taxBase = subtotal + serviceAmount;
+    //const serviceAmount = Math.round(subtotal * servicePercent / 100);
+    const taxBase = subtotal;
     const taxAmount = Math.round(taxBase * taxPercent / 100);
 
-    // Susun parameter URL
     const params = new URLSearchParams({
         pay: pay,
         change: change,
         method: method,
         tax: taxAmount,
-        service: serviceAmount
     }).toString();
 
     // Buka jendela untuk cetak nota
@@ -638,49 +655,54 @@
         select.disabled = false; // jangan disable
         select.style.pointerEvents = 'none';
         select.style.backgroundColor = '#e9ecef';
-            select.style.display = 'block'; // tampilkan select
+        select.style.display = 'block'; // tampilkan select
     }
-
 }
-
 </script>
 <script>
     function scanUID() {
     const uid = document.getElementById('uidInput').value.trim();
+
     if (uid === "") {
         alert("UID tidak boleh kosong.");
         return;
     }
 
-    fetch(`/check-member/${uid}`)
-        .then(response => response.json())
-        .then(data => {
-
-            const select = document.getElementById('customer_id');
-            if (data.success) {
-                // Set nama member di select option
-                for (const option of select.options) {
-                    if (option.value == data.member.id) {
-                        option.selected = true;
-                        select.disabled = true;
-                        break;
-                    }
+    fetch(`/check-member/${uid}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    })
+    .then(data => {
+        const select = document.getElementById('customer_id');
+        if (data.success) {
+            for (const option of select.options) {
+                if (option.value == data.data.id) {
+                    option.selected = true;
+                    select.disabled = true;
+                    break;
                 }
-
-                document.getElementById('memberInfo').innerHTML = `
-                    <div class="alert alert-success">
-                        <strong>${data.member.name}</strong><br>
-                        Saldo: Rp${data.member.balance.toLocaleString()}
-                    </div>`;
-            } else {
-                document.getElementById('memberInfo').innerHTML = `
-                    <div class="alert alert-danger">Member dengan UID <strong>${uid}</strong> tidak ditemukan.</div>`;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan saat mencari member.');
-        });
+
+            document.getElementById('memberInfo').innerHTML = `
+                <div class="alert alert-success">
+                    <strong>${data.data.nama}</strong><br>
+                    Saldo: Rp${parseInt(data.data.saldo).toLocaleString()}
+                </div>`;
+        } else {
+            document.getElementById('memberInfo').innerHTML = `
+                <div class="alert alert-danger">Member dengan UID <strong>${uid}</strong> tidak ditemukan.</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat mencari member.');
+    });
 }
+
 </script>
 @endsection

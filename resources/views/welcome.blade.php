@@ -193,11 +193,11 @@
         <a href="{{ route('login') }}">
             <i class="fas fa-sign-in-alt"></i> Login
         </a>
-        @if (Route::has('register'))
+        {{-- @if (Route::has('register'))
         <a href="{{ route('register') }}">
             <i class="fas fa-user-plus"></i> Register
         </a>
-        @endif
+        @endif --}}
         @endauth
     </div>
     @endif

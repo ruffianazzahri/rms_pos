@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
 
 class CustomerVipController extends Controller
 {
@@ -137,27 +138,28 @@ class CustomerVipController extends Controller
 
     // app/Http/Controllers/CustomerVipController.php
 
-    public function scan()
-    {
-        $uid = request()->get('uid'); // ambil dari query string
+public function scan($uid)
+{
+    $uid = (int) trim($uid);
 
-        $customer = CustomerVip::where('uid', $uid)->first();
+    $customer = DB::table('customers_vip')->where('uid', $uid)->first();
 
-        if ($customer) {
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'id' => $customer->id,
-                    'nama' => $customer->name,
-                    'saldo' => $customer->balance,
-                ]
-            ]);
-        } else {
-            return response()->json([
-                'success' => false,
-                'message' => 'UID tidak ditemukan.'
-            ]);
-        }
+    if ($customer) {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $customer->id,
+                'nama' => $customer->name,
+                'saldo' => $customer->balance,
+            ]
+        ]);
+    } else {
+        return response()->json([
+            'success' => false,
+            'message' => 'UID tidak ditemukan.'
+        ]);
     }
+}
+
 
 }

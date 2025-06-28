@@ -87,22 +87,22 @@ class CashierController extends Controller
             $totalQty = array_sum(array_column($items, 'qty'));
 
             // Ambil charge dari tabel master_charges
-            $serviceCharge = MasterCharge::where('type', 'service')->where('is_active', 1)->first();
+            //$serviceCharge = MasterCharge::where('type', 'service')->where('is_active', 1)->first();
             $taxCharge     = MasterCharge::where('type', 'tax')->where('is_active', 1)->first();
 
             // Ambil persentase, fallback ke 0 jika tidak ada
-            $servicePercent = $serviceCharge?->percentage ?? 0;
+            //$servicePercent = $serviceCharge?->percentage ?? 0;
             $taxPercent     = $taxCharge?->percentage ?? 0;
 
             // Hitung service charge dari subtotal
-            $serviceAmount = round(($subTotal * $servicePercent) / 100, 2);
+            //$serviceAmount = round(($subTotal) / 100, 2);
 
             // Hitung pajak dari (subtotal + service charge)
-            $taxBase   = $subTotal + $serviceAmount;
+            $taxBase   = $subTotal;
             $taxAmount = round(($taxBase * $taxPercent) / 100, 2);
 
             // Hitung grand total
-            $grandTotal = $subTotal + $serviceAmount + $taxAmount;
+            $grandTotal = $subTotal + $taxAmount;
 
             // Simpan ke orders
             $order = Order::create([
@@ -111,7 +111,7 @@ class CashierController extends Controller
                 'order_status'   => 'completed',
                 'total_products' => $totalQty,
                 'sub_total'      => $subTotal,
-                'service_charge' => $serviceAmount, // pastikan kolom ini ada
+                'service_charge' => null,
                 'vat'            => $taxAmount,
                 'invoice_no'     => 'INV-' . time(),
                 'total'          => $grandTotal,
@@ -268,6 +268,7 @@ class CashierController extends Controller
     //     return response($nota, 200)
     //         ->header('Content-Type', 'text/plain; charset=UTF-8');
     // }
+
     public function printNota(Request $request, $id)
     {
         $order = Order::with(['orderDetails.product', 'customer'])->findOrFail($id);
@@ -288,8 +289,8 @@ class CashierController extends Controller
         // Hitung service dari subtotal
         $service = round($subtotal * $servicePercent / 100);
 
-        // Pajak dihitung dari subtotal + service
-        $vatBase = $subtotal + $service;
+        // Pajak dihitung dari subtotal
+        $vatBase = $subtotal;
         $vat = round($vatBase * $vatPercent / 100);
 
         $grandTotal = $vatBase + $vat;

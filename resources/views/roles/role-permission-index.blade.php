@@ -18,7 +18,7 @@
                 </div>
                 <div>
                     <a href="{{ route('rolePermission.create') }}" class="btn btn-primary add-list"><i
-                            class="fa-solid fa-plus mr-3"></i>Tamabahkan Role untuk Hak Akses</a>
+                            class="fa-solid fa-plus mr-3"></i>Tambahkan Role untuk Hak Akses</a>
                 </div>
             </div>
         </div>
