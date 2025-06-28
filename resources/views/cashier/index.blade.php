@@ -190,7 +190,9 @@
         <option value="debit">Debit</option>
         <option value="credit">Credit</option>
         <option value="e-wallet">E-Wallet</option>
+        <option value="membership">Membership</option>
     </select>
+
     <div id="cash-fields" style="display:none;" class="mt-3">
         <label for="cash_received">Uang Diterima (Rp):</label>
         <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal" min="0">
@@ -226,7 +228,7 @@
 <!-- Modal Detail Transaksi -->
 <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog  modal-xl" role="document">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Detail Transaksi</h5>
@@ -261,9 +263,13 @@
                 <div id="memberInfo" class="mt-3"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="scanUID()">Cari Member</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="scanBtn" onclick="scanUID()">Cari Member</button>
+                <button type="button" class="btn btn-success d-none" id="confirmBtn"
+                    data-dismiss="modal">Konfirmasi</button>
+                <button type="button" class="btn btn-secondary" id="closeBtn" data-dismiss="modal">Tutup</button>
             </div>
+
+
         </div>
     </div>
 </div>
@@ -662,47 +668,83 @@
 <script>
     function scanUID() {
     const uid = document.getElementById('uidInput').value.trim();
+    const infoContainer = document.getElementById('memberInfo');
+    const scanBtn = document.getElementById('scanBtn');
+    const confirmBtn = document.getElementById('confirmBtn');
+    const closeBtn = document.getElementById('closeBtn');
 
-    if (uid === "") {
+    if (!uid) {
         alert("UID tidak boleh kosong.");
         return;
     }
 
-    fetch(`/check-member/${uid}`, {
+    scanBtn.disabled = true;
+    scanBtn.innerText = "Mencari...";
+
+    fetch(`/check-member/${encodeURIComponent(uid)}`, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
     .then(response => {
+        scanBtn.disabled = false;
+        scanBtn.innerText = "Cari Member";
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
     })
     .then(data => {
-        const select = document.getElementById('customer_id');
         if (data.success) {
+            const select = document.getElementById('customer_id');
+            const { id, nama, saldo } = data.data;
+
             for (const option of select.options) {
-                if (option.value == data.data.id) {
+                if (option.value == id) {
                     option.selected = true;
                     select.disabled = true;
                     break;
                 }
             }
 
-            document.getElementById('memberInfo').innerHTML = `
+              document.getElementById('method').value = 'membership';
+
+            infoContainer.innerHTML = `
                 <div class="alert alert-success">
-                    <strong>${data.data.nama}</strong><br>
-                    Saldo: Rp${parseInt(data.data.saldo).toLocaleString()}
+                    <strong>${nama}</strong><br>
+                    Saldo: Rp${parseInt(saldo).toLocaleString()}
                 </div>`;
+
+            // Tampilkan tombol konfirmasi dan sembunyikan tombol tutup
+            confirmBtn.classList.remove('d-none');
+            closeBtn.classList.add('d-none');
+
         } else {
-            document.getElementById('memberInfo').innerHTML = `
-                <div class="alert alert-danger">Member dengan UID <strong>${uid}</strong> tidak ditemukan.</div>`;
+            infoContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    Member dengan UID <strong>${uid}</strong> tidak ditemukan.
+                </div>`;
+            confirmBtn.classList.add('d-none');
+            closeBtn.classList.remove('d-none');
         }
     })
     .catch(error => {
+        scanBtn.disabled = false;
+        scanBtn.innerText = "Cari Member";
         console.error('Error:', error);
         alert('Terjadi kesalahan saat mencari member.');
+        confirmBtn.classList.add('d-none');
+        closeBtn.classList.remove('d-none');
     });
 }
+
+document.getElementById('scanMemberModal').addEventListener('shown.modal', function () {
+    const input = document.getElementById('uidInput');
+    input.value = '';
+    input.focus();
+
+    document.getElementById('memberInfo').innerHTML = '';
+    document.getElementById('confirmBtn').classList.add('d-none');
+    document.getElementById('closeBtn').classList.remove('d-none');
+});
 
 </script>
 @endsection
