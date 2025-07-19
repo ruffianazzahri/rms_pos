@@ -124,61 +124,84 @@ class FinancialReportController extends Controller
     //     ]);
     // }
 
-    public function index(Request $request)
-    {
-        $month = $request->input('month', date('m'));
-        $year = $request->input('year', date('Y'));
+public function index(Request $request)
+{
+    $month = $request->input('month', date('m'));
+    $year = $request->input('year', date('Y'));
 
-        // Ambil data pendapatan dari tabel orders
-        $rawQuery = "
+    // Ambil data pendapatan dari tabel orders dan orders_vip
+    $rawQuery = "
+        (
             SELECT
                 NULL AS order_id,
                 DATE(o.order_date) AS date,
                 'Pendapatan (Orders)' AS account,
                 0 AS debit,
                 SUM(o.total) AS credit,
-                'Omzet Penjualan (Termasuk PBJT 10% dan Service Charge)' AS description,
+                'Omzet Penjualan (Termasuk PBJT 10%)' AS description,
                 NULL AS invoice_no,
                 NULL AS order_date,
                 'Otomatis dari data orders' AS image
             FROM orders o
             WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
             GROUP BY DATE(o.order_date)
-            ORDER BY DATE(o.order_date) ASC
-            LIMIT 30;
-        ";
+        )
+        UNION ALL
+        (
+            SELECT
+                NULL AS order_id,
+                DATE(o.order_date) AS date,
+                'Pendapatan (Membership)' AS account,
+                0 AS debit,
+                SUM(o.total) AS credit,
+                'Omzet Penjualan - MEMBERSHIP (Termasuk PBJT 10%)' AS description,
+                NULL AS invoice_no,
+                NULL AS order_date,
+                'Otomatis dari data orders membership' AS image
+            FROM orders_vip o
+            WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+            GROUP BY DATE(o.order_date)
+        )
+        ORDER BY date ASC
+        LIMIT 30;
+    ";
 
-        $journals = DB::select($rawQuery, [$month, $year]);
+    $journals = DB::select($rawQuery, [$month, $year, $month, $year]);
 
-        // Total credit dari orders
-        $totalOrdersQuery = "
-            SELECT COALESCE(SUM(total), 0) as total_credit_orders
-            FROM orders
-            WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
-        ";
-        $totalCreditOrders = DB::select($totalOrdersQuery, [$month, $year])[0]->total_credit_orders;
+    // Total credit dari orders
+    $totalOrdersQuery = "
+        SELECT COALESCE(SUM(total), 0) as total_credit_orders
+        FROM orders
+        WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+    ";
+    $totalCreditOrders = DB::select($totalOrdersQuery, [$month, $year])[0]->total_credit_orders;
 
-        // Total pajak dari order_taxes
-        $totalTaxQuery = "
-            SELECT COALESCE(SUM(tax_amount), 0) as total_tax
-            FROM order_taxes
-            WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?
-        ";
-        $totalTax = DB::select($totalTaxQuery, [$month, $year])[0]->total_tax;
+    // Total credit dari orders_vip
+    $totalOrdersVipQuery = "
+        SELECT COALESCE(SUM(total), 0) as total_credit_orders_vip
+        FROM orders_vip
+        WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+    ";
+    $totalCreditOrdersVip = DB::select($totalOrdersVipQuery, [$month, $year])[0]->total_credit_orders_vip;
 
-        // Total pemasukan = credit orders + pajak
-        //$totalPemasukan = $totalCreditOrders + $totalTax;
+    // Total pajak dari order_taxes
+    $totalTaxQuery = "
+        SELECT COALESCE(SUM(tax_amount), 0) as total_tax
+        FROM order_taxes
+        WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?
+    ";
+    $totalTax = DB::select($totalTaxQuery, [$month, $year])[0]->total_tax;
 
-        $totalPemasukan = $totalCreditOrders;
+    // Total pemasukan = credit orders + credit orders_vip + pajak
+    $totalPemasukan = $totalCreditOrders + $totalCreditOrdersVip;
 
-
-        return view('financial_report.index', [
-            'journals' => $journals,
-            'totalCredit' => $totalPemasukan,
-            'filterMonth' => $month,
-            'filterYear' => $year,
-        ]);
-    }
+    return view('financial_report.index', [
+        'journals' => $journals,
+        'totalCredit' => $totalPemasukan,
+        'filterMonth' => $month,
+        'filterYear' => $year,
+    ]);
+}
 
 public function detailByProduk(Request $request)
 {
@@ -241,7 +264,7 @@ SELECT
         ld.sale_total + ld.sale_total * lc.service_pct / 100 +
         (ld.sale_total + ld.sale_total * lc.service_pct / 100) * lc.tax_pct / 100, 0
     ) AS total,
-    'Omzet Penjualan (Termasuk PBJT 10% dan Service Charge)' AS description,
+    'Omzet Penjualan (Termasuk PBJT 10%)' AS description,
     ld.raw_date AS sale_date
 FROM localized_dates ld, latest_charges lc
 ORDER BY ld.raw_date ASC, ld.product ASC
@@ -269,48 +292,151 @@ public function laporanKeuangan(Request $request)
     $from = $request->input('from');
     $to = $request->input('to');
 
-    $query = DB::table('orders');
-
     if ($range === 'harian') {
         // Hasil: 2025-06-12, 2025-06-13, dst.
-        $query->selectRaw("DATE(order_date) as label, SUM(total) as total")
-              ->whereMonth('order_date', now()->month)
-              ->whereYear('order_date', now()->year)
-              ->groupByRaw("DATE(order_date)");
+        $ordersQuery = "
+            SELECT DATE(order_date) as label, SUM(total) as total
+            FROM orders
+            WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+            GROUP BY DATE(order_date)
+        ";
+
+        $ordersVipQuery = "
+            SELECT DATE(order_date) as label, SUM(total) as total
+            FROM orders_vip
+            WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+            GROUP BY DATE(order_date)
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY label
+        ";
+
+        $data = DB::select($unionQuery, [
+            now()->month, now()->year,
+            now()->month, now()->year
+        ]);
         $period = 'harian';
 
     } elseif ($range === 'mingguan') {
         // Hasil: Minggu ke-x
-        $query->selectRaw("YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total")
-              ->whereYear('order_date', now()->year)
-              ->groupByRaw("YEAR(order_date), WEEK(order_date, 1)");
+        $ordersQuery = "
+            SELECT YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total
+            FROM orders
+            WHERE YEAR(order_date) = ?
+            GROUP BY YEAR(order_date), WEEK(order_date, 1)
+        ";
+
+        $ordersVipQuery = "
+            SELECT YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total
+            FROM orders_vip
+            WHERE YEAR(order_date) = ?
+            GROUP BY YEAR(order_date), WEEK(order_date, 1)
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY year, week
+        ";
+
+        $data = DB::select($unionQuery, [now()->year, now()->year]);
         $period = 'mingguan';
 
     } elseif ($range === 'bulanan') {
         // ✅ Hasil: 2025-06, 2025-05, dst.
-        $query->selectRaw("DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total")
-              ->whereYear('order_date', now()->year)
-              ->groupByRaw("DATE_FORMAT(order_date, '%Y-%m')");
+        $ordersQuery = "
+            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
+            FROM orders
+            WHERE YEAR(order_date) = ?
+            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+        ";
+
+        $ordersVipQuery = "
+            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
+            FROM orders_vip
+            WHERE YEAR(order_date) = ?
+            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY label
+        ";
+
+        $data = DB::select($unionQuery, [now()->year, now()->year]);
         $period = 'bulanan';
 
     } elseif ($range === 'custom' && $from && $to) {
-        $query->selectRaw("DATE(order_date) as label, SUM(total) as total")
-              ->whereBetween('order_date', [$from, $to])
-              ->groupByRaw("DATE(order_date)");
+        $ordersQuery = "
+            SELECT DATE(order_date) as label, SUM(total) as total
+            FROM orders
+            WHERE order_date BETWEEN ? AND ?
+            GROUP BY DATE(order_date)
+        ";
+
+        $ordersVipQuery = "
+            SELECT DATE(order_date) as label, SUM(total) as total
+            FROM orders_vip
+            WHERE order_date BETWEEN ? AND ?
+            GROUP BY DATE(order_date)
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY label
+        ";
+
+        $data = DB::select($unionQuery, [$from, $to, $from, $to]);
         $period = 'custom';
 
     } else {
         // Default ke bulanan
-        $query->selectRaw("DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total")
-              ->whereYear('order_date', now()->year)
-              ->groupByRaw("DATE_FORMAT(order_date, '%Y-%m')");
+        $ordersQuery = "
+            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
+            FROM orders
+            WHERE YEAR(order_date) = ?
+            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+        ";
+
+        $ordersVipQuery = "
+            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
+            FROM orders_vip
+            WHERE YEAR(order_date) = ?
+            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY label
+        ";
+
+        $data = DB::select($unionQuery, [now()->year, now()->year]);
         $period = 'bulanan';
     }
 
-    $data = $query->orderBy('label')->get();
+    // Agregasi data untuk menggabungkan total dari kedua tabel
+    $aggregatedData = collect($data)->groupBy('label')->map(function ($items, $label) {
+        return (object) [
+            'label' => $label,
+            'total' => $items->sum('total'),
+            'year' => $items->first()->year ?? null,
+            'week' => $items->first()->week ?? null
+        ];
+    })->values();
 
     return view('laporan.keuangan', [
-        'data' => $data,
+        'data' => $aggregatedData,
         'range' => $range,
         'from' => $from,
         'to' => $to,
@@ -324,51 +450,154 @@ public function exportLaporan(Request $request)
     $range = $request->input('range', 'bulanan');
     $from = $request->input('from');
     $to = $request->input('to');
-
-    $query = DB::table('orders');
     $period = $range;
 
     if ($range === 'harian') {
-        $query->selectRaw("DATE(order_date) as label, SUM(total) as total")
-              ->whereMonth('order_date', now()->month)
-              ->whereYear('order_date', now()->year)
-              ->groupByRaw("DATE(order_date)")
-              ->orderBy('label');
+        $ordersQuery = "
+            SELECT DATE(order_date) as label, SUM(total) as total
+            FROM orders
+            WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+            GROUP BY DATE(order_date)
+        ";
+
+        $ordersVipQuery = "
+            SELECT DATE(order_date) as label, SUM(total) as total
+            FROM orders_vip
+            WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+            GROUP BY DATE(order_date)
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY label
+        ";
+
+        $data = DB::select($unionQuery, [
+            now()->month, now()->year,
+            now()->month, now()->year
+        ]);
 
     } elseif ($range === 'mingguan') {
-        $query->selectRaw("YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total")
-              ->whereYear('order_date', now()->year)
-              ->groupByRaw("YEAR(order_date), WEEK(order_date, 1)")
-              ->orderBy('year')
-              ->orderBy('week');
+        $ordersQuery = "
+            SELECT YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total
+            FROM orders
+            WHERE YEAR(order_date) = ?
+            GROUP BY YEAR(order_date), WEEK(order_date, 1)
+        ";
+
+        $ordersVipQuery = "
+            SELECT YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total
+            FROM orders_vip
+            WHERE YEAR(order_date) = ?
+            GROUP BY YEAR(order_date), WEEK(order_date, 1)
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY year, week
+        ";
+
+        $data = DB::select($unionQuery, [now()->year, now()->year]);
 
     } elseif ($range === 'bulanan') {
-        $query->selectRaw("DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total")
-              ->whereYear('order_date', now()->year)
-              ->groupByRaw("DATE_FORMAT(order_date, '%Y-%m')")
-              ->orderBy('label');
+        $ordersQuery = "
+            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
+            FROM orders
+            WHERE YEAR(order_date) = ?
+            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+        ";
+
+        $ordersVipQuery = "
+            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
+            FROM orders_vip
+            WHERE YEAR(order_date) = ?
+            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY label
+        ";
+
+        $data = DB::select($unionQuery, [now()->year, now()->year]);
 
     } elseif ($range === 'custom' && $from && $to) {
-        $query->selectRaw("DATE(order_date) as label, SUM(total) as total")
-              ->whereBetween('order_date', [$from, $to])
-              ->groupByRaw("DATE(order_date)")
-              ->orderBy('label');
+        $ordersQuery = "
+            SELECT DATE(order_date) as label, SUM(total) as total
+            FROM orders
+            WHERE order_date BETWEEN ? AND ?
+            GROUP BY DATE(order_date)
+        ";
+
+        $ordersVipQuery = "
+            SELECT DATE(order_date) as label, SUM(total) as total
+            FROM orders_vip
+            WHERE order_date BETWEEN ? AND ?
+            GROUP BY DATE(order_date)
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY label
+        ";
+
+        $data = DB::select($unionQuery, [$from, $to, $from, $to]);
 
     } else {
-        $query->selectRaw("DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total")
-              ->whereYear('order_date', now()->year)
-              ->groupByRaw("DATE_FORMAT(order_date, '%Y-%m')")
-              ->orderBy('label');
+        $ordersQuery = "
+            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
+            FROM orders
+            WHERE YEAR(order_date) = ?
+            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+        ";
+
+        $ordersVipQuery = "
+            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
+            FROM orders_vip
+            WHERE YEAR(order_date) = ?
+            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+        ";
+
+        $unionQuery = "
+            ($ordersQuery)
+            UNION ALL
+            ($ordersVipQuery)
+            ORDER BY label
+        ";
+
+        $data = DB::select($unionQuery, [now()->year, now()->year]);
         $period = 'bulanan';
     }
 
-    $data = $query->get();
+    // Agregasi data untuk menggabungkan total dari kedua tabel
+    $aggregatedData = collect($data)->groupBy('label')->map(function ($items, $label) {
+        return (object) [
+            'label' => $label,
+            'total' => $items->sum('total'),
+            'year' => $items->first()->year ?? null,
+            'week' => $items->first()->week ?? null
+        ];
+    })->values();
 
     if ($format === 'pdf') {
-        $pdf = PDF::loadView('laporan.keuangan_pdf', compact('data', 'range', 'from', 'to', 'period'));
+        $pdf = PDF::loadView('laporan.keuangan_pdf', [
+            'data' => $aggregatedData,
+            'range' => $range,
+            'from' => $from,
+            'to' => $to,
+            'period' => $period
+        ]);
         return $pdf->download('laporan-keuangan.pdf');
     } elseif ($format === 'excel') {
-        return Excel::download(new \App\Exports\LaporanKeuanganExport($data, $period), 'laporan-keuangan.xlsx');
+        return Excel::download(new \App\Exports\LaporanKeuanganExport($aggregatedData, $period), 'laporan-keuangan.xlsx');
     }
 
     return redirect()->back()->with('error', 'Format tidak dikenali.');

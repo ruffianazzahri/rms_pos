@@ -385,6 +385,7 @@ public function printNota(Request $request, $id)
     $method = $request->input('method', $order->payment_method ?? 'Tidak diketahui');
     $pay = (int) $request->input('pay', $order->pay ?? 0);
     $change = (int) $request->input('change', 0);
+    $remainingBalance = (int) $request->input('remaining_balance', 0);
 
     $subtotal = $order->sub_total ?? 0;
 
@@ -399,13 +400,15 @@ public function printNota(Request $request, $id)
 
     // Total akhir
     $grandTotal = $subtotal + $vat;
-    if ($change === 0) {
+
+    // Untuk non-membership, hitung kembalian jika belum ada
+    if ($method !== 'membership' && $change === 0) {
         $change = max(0, $pay - $grandTotal);
     }
 
     return view('nota.print', compact(
         'order', 'pay', 'change', 'method',
-        'vat', 'service', 'subtotal', 'grandTotal'
+        'vat', 'service', 'subtotal', 'grandTotal', 'remainingBalance'
     ));
 }
 

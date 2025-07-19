@@ -300,31 +300,31 @@
     const cashFields = document.getElementById('cash-fields');
     const cashReceived = document.getElementById('cash-received');
     const cashChange = document.getElementById('cash-change');
-    const kembalianText = document.getElementById('kembalian-text');
     let grandTotal = document.getElementById('grand-total');
 
     function toggleCashFields() {
         if (methodSelect.value === 'cash') {
             cashFields.style.display = 'block';
             cashReceived.disabled = false;
+            cashChange.disabled = false;
             cashReceived.placeholder = 'Masukkan nominal';
         } else if (methodSelect.value === 'membership') {
             cashFields.style.display = 'block';
             cashReceived.disabled = true;
+            cashChange.disabled = true;
             // Auto-fill dengan grand total
             const grandTotalText = document.getElementById('grand-total').innerText;
             const cleaned = grandTotalText.replace(/[^\d]/g, '');
             const grandTotalValue = parseFloat(cleaned);
             cashReceived.value = grandTotalValue || 0;
             cashReceived.placeholder = 'Otomatis sesuai total';
-            cashChange.value = 'Rp 0';
-            cashChange.style.display = 'none';
-            kembalianText.style.display = 'none';
+            cashChange.value = 'Saldo akan dipotong';
         } else {
             cashFields.style.display = 'none';
             cashReceived.value = '';
             cashChange.value = '';
             cashReceived.disabled = false;
+            cashChange.disabled = false;
         }
     }
 
@@ -504,8 +504,13 @@
 
                 if (method === 'membership' && data.remaining_balance !== undefined) {
                     html += `
-                        <p><strong>Sisa Saldo:</strong> Rp ${data.remaining_balance.toLocaleString()}</p>
+                        <p><strong>Sisa Saldo:</strong> Rp ${data.remaining_balance.toLocaleString('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        })}</p>
                     `;
+                    // Simpan sisa saldo untuk print nota
+                    window.lastMemberBalance = data.remaining_balance;
                 }
 
                 html += `
@@ -653,7 +658,7 @@
             const cleaned = grandTotalText.replace(/[^\d]/g, '');
             const grandTotalValue = parseFloat(cleaned);
             cashReceived.value = grandTotalValue || 0;
-            cashChange.value = 'Rp 0';
+            cashChange.value = 'Saldo akan dipotong';
         }
     }
 
@@ -791,34 +796,40 @@
 </script>
 <script>
     document.getElementById('printNota').addEventListener('click', function () {
-    const orderId = window.lastOrderId;
-    const orderType = window.lastOrderType || 'regular'; // 'vip' jika membership
+        const orderId = window.lastOrderId;
+        const orderType = window.lastOrderType || 'regular'; // 'vip' jika membership
 
-    const methodSelect = document.querySelector('select[name="method"]');
-    const cashReceived = document.getElementById('cash-received');
-    const changeInput = document.getElementById('cash-change');
-    const subtotalInput = document.getElementById('subtotal-amount');
-    const taxPercentageInput = document.getElementById('tax-percentage');
+        const methodSelect = document.querySelector('select[name="method"]');
+        const cashReceived = document.getElementById('cash-received');
+        const changeInput = document.getElementById('cash-change');
+        const subtotalInput = document.getElementById('subtotal-amount');
+        const taxPercentageInput = document.getElementById('tax-percentage');
 
-    const pay = cashReceived?.value ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0 : 0;
-    const change = changeInput?.value ? parseInt(changeInput.value.replace(/[^\d]/g, '')) || 0 : 0;
-    const method = methodSelect?.value || 'Tidak diketahui';
-    const subtotal = subtotalInput?.value ? parseInt(subtotalInput.value.replace(/[^\d]/g, '')) || 0 : 0;
-    const taxPercent = taxPercentageInput?.value ? parseFloat(taxPercentageInput.value) || 0 : 0;
+        const pay = cashReceived?.value ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0 : 0;
+        const change = changeInput?.value ? parseInt(changeInput.value.replace(/[^\d]/g, '')) || 0 : 0;
+        const method = methodSelect?.value || 'Tidak diketahui';
+        const subtotal = subtotalInput?.value ? parseInt(subtotalInput.value.replace(/[^\d]/g, '')) || 0 : 0;
+        const taxPercent = taxPercentageInput?.value ? parseFloat(taxPercentageInput.value) || 0 : 0;
 
-    const taxAmount = Math.round(subtotal * taxPercent / 100);
+        const taxAmount = Math.round(subtotal * taxPercent / 100);
 
-    const params = new URLSearchParams({
-        pay,
-        change,
-        method,
-        tax: taxAmount,
-        type: orderType // <-- tambahkan ini
-    }).toString();
+        // Untuk membership, ambil sisa saldo dari response yang tersimpan
+        let remainingBalance = 0;
+        if (method === 'membership' && window.lastMemberBalance !== undefined) {
+            remainingBalance = window.lastMemberBalance;
+        }
 
-    const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
-});
+        const params = new URLSearchParams({
+            pay,
+            change,
+            method,
+            tax: taxAmount,
+            type: orderType,
+            remaining_balance: remainingBalance // tambahkan sisa saldo
+        }).toString();
 
+        const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
+    });
 </script>
 <script>
     function handleMember(isMember) {

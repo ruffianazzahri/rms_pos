@@ -109,7 +109,13 @@
     <div class="total-section">
         <div class="flex"><span>Pembayaran:</span><span>{{ $method }}</span></div>
         <div class="flex"><span>Dibayar:</span><span>Rp{{ number_format($pay, 0, ',', '.') }}</span></div>
+
+        @if ($method === 'membership')
+        <div class="flex"><span>Sisa Saldo:</span><span>Rp{{ number_format($remainingBalance, 0, ',', '.') }}</span>
+        </div>
+        @else
         <div class="flex"><span>Kembalian:</span><span>Rp{{ number_format($change, 0, ',', '.') }}</span></div>
+        @endif
     </div>
 
     <hr>

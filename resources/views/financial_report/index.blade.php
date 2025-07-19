@@ -214,7 +214,7 @@
                         data-toggle="modal" data-target="#imageModal">
                         <i class="fas fa-eye"></i>
                     </button>
-                    @elseif($image === 'Otomatis dari data orders')
+                    @elseif($image === 'Otomatis dari data orders' || $image === 'Otomatis dari data orders membership')
                     {{ $image }}
                     @else
                     -
