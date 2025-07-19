@@ -194,9 +194,9 @@
     </select>
 
     <div id="cash-fields" style="display:none;" class="mt-3">
-        <label for="cash_received">Uang Diterima (Rp):</label>
+        <label for="cash_received" id="uangditerima">Uang Diterima (Rp):</label>
         <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal" min="0">
-        <label class="mt-2">Kembalian:</label>
+        <label class="mt-2" id="kembalian-text">Kembalian:</label>
         <input type="text" id="cash-change" class="form-control" readonly>
     </div>
     <button class="btn btn-primary mt-3" type="button" id="openConfirmModal">💰 Bayar</button>
@@ -300,15 +300,31 @@
     const cashFields = document.getElementById('cash-fields');
     const cashReceived = document.getElementById('cash-received');
     const cashChange = document.getElementById('cash-change');
+    const kembalianText = document.getElementById('kembalian-text');
     let grandTotal = document.getElementById('grand-total');
 
     function toggleCashFields() {
         if (methodSelect.value === 'cash') {
             cashFields.style.display = 'block';
+            cashReceived.disabled = false;
+            cashReceived.placeholder = 'Masukkan nominal';
+        } else if (methodSelect.value === 'membership') {
+            cashFields.style.display = 'block';
+            cashReceived.disabled = true;
+            // Auto-fill dengan grand total
+            const grandTotalText = document.getElementById('grand-total').innerText;
+            const cleaned = grandTotalText.replace(/[^\d]/g, '');
+            const grandTotalValue = parseFloat(cleaned);
+            cashReceived.value = grandTotalValue || 0;
+            cashReceived.placeholder = 'Otomatis sesuai total';
+            cashChange.value = 'Rp 0';
+            cashChange.style.display = 'none';
+            kembalianText.style.display = 'none';
         } else {
             cashFields.style.display = 'none';
             cashReceived.value = '';
             cashChange.value = '';
+            cashReceived.disabled = false;
         }
     }
 
@@ -316,100 +332,103 @@
     document.addEventListener('DOMContentLoaded', function () {
         toggleCashFields();
     });
-        cashReceived.addEventListener('input', function () {
-            const received = parseFloat(this.value);
-            const grandTotalText = document.getElementById('grand-total').innerText;
 
-            // Hapus karakter non-digit (seperti "Rp", titik)
-            const cleaned = grandTotalText.replace(/[^\d]/g, '');
+    cashReceived.addEventListener('input', function () {
+        // Hanya aktif jika bukan membership
+        if (methodSelect.value === 'membership') return;
 
-            // Konversi ke angka
-            const grandTotalValue = parseFloat(cleaned);
+        const received = parseFloat(this.value);
+        const grandTotalText = document.getElementById('grand-total').innerText;
 
-            // Hitung kembalian
-            const change = received - grandTotalValue;
+        // Hapus karakter non-digit (seperti "Rp", titik)
+        const cleaned = grandTotalText.replace(/[^\d]/g, '');
 
-            cashChange.value = change >= 0 ? 'Rp ' + change.toLocaleString() : 'Rp 0';
-        });
+        // Konversi ke angka
+        const grandTotalValue = parseFloat(cleaned);
 
-        document.getElementById('openConfirmModal').addEventListener('click', function () {
+        // Hitung kembalian
+        const change = received - grandTotalValue;
 
-            const customerSelect = document.getElementById('customer_id');
-            const customer = customerSelect.value;
-            const itemsInput = document.getElementById('items-input').value;
-            const method = document.querySelector('select[name="method"]').value;
-            const cashReceived = document.getElementById('cash-received').value;
+        cashChange.value = change >= 0 ? 'Rp ' + change.toLocaleString() : 'Rp 0';
+    });
 
-            // cek keranjang kosong
-            let isItemsEmpty = true;
-            try {
-                const items = JSON.parse(itemsInput);
-                isItemsEmpty = !items || items.length === 0;
-            } catch (e) {
-                isItemsEmpty = true;
-            }
+    document.getElementById('openConfirmModal').addEventListener('click', function () {
+        const customerSelect = document.getElementById('customer_id');
+        const customer = customerSelect.value;
+        const itemsInput = document.getElementById('items-input').value;
+        const method = document.querySelector('select[name="method"]').value;
+        const cashReceived = document.getElementById('cash-received').value;
 
-            // cek uang diterima untuk cash
-            const isCashEmpty = method === 'cash' && (!cashReceived || parseFloat(cashReceived) <= 0);
+        // cek keranjang kosong
+        let isItemsEmpty = true;
+        try {
+            const items = JSON.parse(itemsInput);
+            isItemsEmpty = !items || items.length === 0;
+        } catch (e) {
+            isItemsEmpty = true;
+        }
 
-            // cek customer belum dipilih (default option disabled biasanya valuenya null atau '')
-            const isCustomerEmpty = !customer || customer === '';
+        // cek uang diterima untuk cash (untuk membership tidak perlu cek karena otomatis)
+        const isCashEmpty = method === 'cash' && (!cashReceived || parseFloat(cashReceived) <= 0);
 
-            // Validasi khusus untuk method membership
-            if (method === 'membership' && isCustomerEmpty) {
-                alert('Customer harus dipilih untuk pembayaran membership.');
-                return;
-            }
+        // cek customer belum dipilih (default option disabled biasanya valuenya null atau '')
+        const isCustomerEmpty = !customer || customer === '';
 
-            // jika SEMUA kosong
-            if (isCustomerEmpty && isItemsEmpty && method === 'cash' && isCashEmpty) {
-                alert('Form belum diisi sama sekali! Pilih customer, tambahkan item, dan masukkan uang diterima.');
-                return;
-            }
+        // Validasi khusus untuk method membership
+        if (method === 'membership' && isCustomerEmpty) {
+            alert('Customer harus dipilih untuk pembayaran membership.');
+            return;
+        }
 
-            // cek satu-satu
-            if (isCustomerEmpty) {
-                alert('Silakan pilih customer terlebih dahulu.');
-                return;
-            }
+        // jika SEMUA kosong (hanya untuk cash)
+        if (method === 'cash' && isCustomerEmpty && isItemsEmpty && isCashEmpty) {
+            alert('Form belum diisi sama sekali! Pilih customer, tambahkan item, dan masukkan uang diterima.');
+            return;
+        }
 
-            if (isItemsEmpty) {
-                alert('Keranjang belanja masih kosong. Silakan tambahkan item.');
-                return;
-            }
+        // cek satu-satu
+        if (isCustomerEmpty) {
+            alert('Silakan pilih customer terlebih dahulu.');
+            return;
+        }
 
-            if (isCashEmpty) {
-                alert('Masukkan nominal uang diterima untuk metode pembayaran cash.');
-                return;
-            }
+        if (isItemsEmpty) {
+            alert('Keranjang belanja masih kosong. Silakan tambahkan item.');
+            return;
+        }
 
-            // kalau semua valid, submit form
-  	    $('#confirmModal').modal('show');
-        });
+        if (isCashEmpty) {
+            alert('Masukkan nominal uang diterima untuk metode pembayaran cash.');
+            return;
+        }
+
+        // kalau semua valid, submit form
+        $('#confirmModal').modal('show');
+    });
 
     document.getElementById('confirmSubmit').addEventListener('click', function () {
-    const form = document.getElementById('form-transaksi');
-    const formData = new FormData(form);
+        const form = document.getElementById('form-transaksi');
+        const formData = new FormData(form);
 
-    // Debug: Log form data untuk memastikan customer_id ter-submit
-    console.log('Form data sebelum submit:');
-    for (let [key, value] of formData.entries()) {
-        console.log(key, value);
-    }
+        // Debug: Log form data untuk memastikan customer_id ter-submit
+        console.log('Form data sebelum submit:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
 
-    // Pastikan customer_id ter-submit dengan benar
-    const customerSelect = document.getElementById('customer_id');
-    const customerId = customerSelect.value;
+        // Pastikan customer_id ter-submit dengan benar
+        const customerSelect = document.getElementById('customer_id');
+        const customerId = customerSelect.value;
 
-    if (!customerId && document.querySelector('select[name="method"]').value === 'membership') {
-        alert('Customer ID tidak ditemukan untuk pembayaran membership');
-        return;
-    }
+        if (!customerId && document.querySelector('select[name="method"]').value === 'membership') {
+            alert('Customer ID tidak ditemukan untuk pembayaran membership');
+            return;
+        }
 
-    // Jika customer_id tidak ada di FormData, tambahkan manual
-    if (!formData.get('customer_id') && customerId) {
-        formData.set('customer_id', customerId);
-    }
+        // Jika customer_id tidak ada di FormData, tambahkan manual
+        if (!formData.get('customer_id') && customerId) {
+            formData.set('customer_id', customerId);
+        }
 
         const method = document.querySelector('select[name="method"]')?.value || 'cash';
         const orderType = method === 'membership' ? 'vip' : 'regular';
@@ -419,132 +438,241 @@
         console.log('Metode pembayaran:', method);
         console.log('Order type terdeteksi:', orderType);
 
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': formData.get('_token'),
+            },
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                $('#confirmModal').modal('hide');
+                const order = data.order;
 
+                const method = document.querySelector('select[name="method"]').value;
+                const uangDiterima = parseInt(document.getElementById('cash-received').value || '0');
+                let kembalian = 0;
 
-    fetch(form.action, {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': formData.get('_token'),
-        },
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            $('#confirmModal').modal('hide');
-            const order = data.order;
+                const pajak = parseInt(document.getElementById('tax-amount')?.textContent.replace(/[^\d]/g, '') || 0);
+                const jasa = parseInt(document.getElementById('service-amount')?.textContent.replace(/[^\d]/g, '') || 0);
 
-            const method = document.querySelector('select[name="method"]').value;
-            const uangDiterima = parseInt(document.getElementById('cash-received').value || '0');
-            let kembalian = 0;
+                // Handle response yang berbeda untuk membership vs non-membership
+                let totalAkhir;
+                let orderDetails = [];
 
-            const pajak = parseInt(document.getElementById('tax-amount')?.textContent.replace(/[^\d]/g, '') || 0);
-            const jasa = parseInt(document.getElementById('service-amount')?.textContent.replace(/[^\d]/g, '') || 0);
-
-            // Handle response yang berbeda untuk membership vs non-membership
-            let totalAkhir;
-            let orderDetails = [];
-
-            if (method === 'membership') {
-                // Untuk membership, response mungkin tidak memiliki struktur yang sama
-
-                totalAkhir = order.total || data.total || 0;
-                orderDetails = order.order_details || [];
-                // Tampilkan sisa saldo jika ada
-                if (data.remaining_balance !== undefined) {
-                    console.log('Sisa saldo setelah transaksi:', data.remaining_balance);
+                if (method === 'membership') {
+                    totalAkhir = order.total || data.total || 0;
+                    orderDetails = order.order_details || [];
+                    // Tampilkan sisa saldo jika ada
+                    if (data.remaining_balance !== undefined) {
+                        console.log('Sisa saldo setelah transaksi:', data.remaining_balance);
+                    }
+                } else {
+                    if (typeof order.total === 'undefined') {
+                        console.error('order.total tidak tersedia di response:', order);
+                        alert('Data transaksi tidak lengkap (total).');
+                        return;
+                    }
+                    totalAkhir = order.total;
+                    orderDetails = order.order_details || [];
                 }
+
+                if (method === 'cash') {
+                    kembalian = uangDiterima - totalAkhir;
+                }
+
+                console.log(['uang diterima', uangDiterima, 'kembalian', kembalian, 'totalakhir', totalAkhir]);
+
+                let html = `
+                <p><strong>Invoice:</strong> ${order?.invoice_no || 'N/A'}</p>
+                <p><strong>Tanggal:</strong> ${order?.order_date ? new Date(order.order_date).toLocaleString() : new Date().toLocaleString()}</p>
+                <p><strong>Total Produk:</strong> ${order?.total_products || 'N/A'}</p>
+                <p><strong>Pajak:</strong> Rp ${pajak.toLocaleString()}</p>
+                <p><strong>Total Harga:</strong> Rp ${totalAkhir.toLocaleString()}</p>
+                <p><strong>Status Pembayaran:</strong> ${order?.payment_status || 'paid'}</p>
+                `;
+
+                if (method === 'cash') {
+                    html += `
+                        <p><strong>Uang Diterima:</strong> Rp ${uangDiterima.toLocaleString()}</p>
+                        <p><strong>Kembalian:</strong> Rp ${kembalian >= 0 ? kembalian.toLocaleString() : 0}</p>
+                    `;
+                }
+
+                if (method === 'membership' && data.remaining_balance !== undefined) {
+                    html += `
+                        <p><strong>Sisa Saldo:</strong> Rp ${data.remaining_balance.toLocaleString()}</p>
+                    `;
+                }
+
+                html += `
+                    <hr>
+                    <h5>Rincian Produk:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Produk</th>
+                                    <th>Qty</th>
+                                    <th>Harga Satuan</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                orderDetails.forEach(detail => {
+                    html += `
+                        <tr>
+                            <td>${detail.product.product_name}</td>
+                            <td>${detail.quantity}</td>
+                            <td>Rp ${detail.unitcost.toLocaleString()}</td>
+                            <td>Rp ${detail.total.toLocaleString()}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+
+                document.getElementById('detailModalBody').innerHTML = html;
+                $('#detailModal').modal('show');
+                window.lastOrderId = order?.id || data.order_id;
             } else {
-                // Untuk non-membership, gunakan struktur order biasa
-                if (typeof order.total === 'undefined') {
-                    console.error('order.total tidak tersedia di response:', order);
-                    alert('Data transaksi tidak lengkap (total).');
-                    return;
-                }
-                totalAkhir = order.total;
-                orderDetails = order.order_details || [];
+                alert('Error: ' + (data.error || 'Terjadi kesalahan'));
             }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Terjadi kesalahan saat memproses transaksi.');
+        });
+    });
 
-            if (method === 'cash') {
-                kembalian = uangDiterima - totalAkhir;
-            }
+    // Reload halaman setelah modal detail ditutup
+    $('#btnCloseModal').on('click', function () {
+        window.location.reload(true);
+    });
 
-            console.log(['uang diterima', uangDiterima, 'kembalian', kembalian, 'totalakhir', totalAkhir]);
+    // Function untuk scan UID member
+    function scanUID() {
+        const uid = document.getElementById('uidInput').value.trim();
+        const infoContainer = document.getElementById('memberInfo');
+        const scanBtn = document.getElementById('scanBtn');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const closeBtn = document.getElementById('closeBtn');
 
-            let html = `
-            <p><strong>Invoice:</strong> ${order?.invoice_no || 'N/A'}</p>
-            <p><strong>Tanggal:</strong> ${order?.order_date ? new Date(order.order_date).toLocaleString() : new Date().toLocaleString()}</p>
-            <p><strong>Total Produk:</strong> ${order?.total_products || 'N/A'}</p>
-            <p><strong>Pajak:</strong> Rp ${pajak.toLocaleString()}</p>
-            <p><strong>Total Harga:</strong> Rp ${totalAkhir.toLocaleString()}</p>
-            <p><strong>Status Pembayaran:</strong> ${order?.payment_status || 'paid'}</p>
-            `;
-
-            if (method === 'cash') {
-                html += `
-                    <p><strong>Uang Diterima:</strong> Rp ${uangDiterima.toLocaleString()}</p>
-                    <p><strong>Kembalian:</strong> Rp ${kembalian >= 0 ? kembalian.toLocaleString() : 0}</p>
-                `;
-            }
-
-            if (method === 'membership' && data.remaining_balance !== undefined) {
-                html += `
-                    <p><strong>Sisa Saldo:</strong> Rp ${data.remaining_balance.toLocaleString()}</p>
-                `;
-            }
-
-            html += `
-                <hr>
-                <h5>Rincian Produk:</h5>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-sm">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Produk</th>
-                                <th>Qty</th>
-                                <th>Harga Satuan</th>
-                                <th>Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            orderDetails.forEach(detail => {
-                html += `
-                    <tr>
-                        <td>${detail.product.product_name}</td>
-                        <td>${detail.quantity}</td>
-                        <td>Rp ${detail.unitcost.toLocaleString()}</td>
-                        <td>Rp ${detail.total.toLocaleString()}</td>
-                    </tr>
-                `;
-            });
-
-            html += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            document.getElementById('detailModalBody').innerHTML = html;
-            $('#detailModal').modal('show');
-            window.lastOrderId = order?.id || data.order_id;
-        } else {
-            // Tampilkan error dari server
-            alert('Error: ' + (data.error || 'Terjadi kesalahan'));
+        if (!uid) {
+            alert("UID tidak boleh kosong.");
+            return;
         }
-    })
-    .catch(err => {
-        console.error(err);
-        alert('Terjadi kesalahan saat memproses transaksi.');
-    });
+
+        scanBtn.disabled = true;
+        scanBtn.innerText = "Mencari...";
+
+        fetch(`/check-member/${encodeURIComponent(uid)}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            scanBtn.disabled = false;
+            scanBtn.innerText = "Cari Member";
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const select = document.getElementById('customer_id');
+                const { id, nama, saldo } = data.data;
+
+                // Set customer
+                for (const option of select.options) {
+                    if (option.value == id) {
+                        option.selected = true;
+                        select.disabled = true;
+                        break;
+                    }
+                }
+
+                // Set method ke membership
+                document.getElementById('method').value = 'membership';
+
+                // Trigger toggle untuk update cash fields
+                toggleCashFields();
+
+                infoContainer.innerHTML = `
+                    <div class="alert alert-success">
+                        <strong>${nama}</strong><br>
+                        Saldo: Rp${parseInt(saldo).toLocaleString()}
+                    </div>`;
+
+                // Tampilkan tombol konfirmasi dan sembunyikan tombol tutup
+                confirmBtn.classList.remove('d-none');
+                closeBtn.classList.add('d-none');
+
+            } else {
+                infoContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        Member dengan UID <strong>${uid}</strong> tidak ditemukan.
+                    </div>`;
+                confirmBtn.classList.add('d-none');
+                closeBtn.classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            scanBtn.disabled = false;
+            scanBtn.innerText = "Cari Member";
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mencari member.');
+            confirmBtn.classList.add('d-none');
+            closeBtn.classList.remove('d-none');
+        });
+    }
+
+    document.getElementById('scanMemberModal').addEventListener('shown.modal', function () {
+        const input = document.getElementById('uidInput');
+        input.value = '';
+        input.focus();
+
+        document.getElementById('memberInfo').innerHTML = '';
+        document.getElementById('confirmBtn').classList.add('d-none');
+        document.getElementById('closeBtn').classList.remove('d-none');
     });
 
-// Reload halaman setelah modal detail ditutup
-  $('#btnCloseModal').on('click', function () {
-      window.location.reload(true);
-  });
+    // Function untuk update grand total dan cash fields ketika ada perubahan
+    function updateGrandTotalAndCashFields() {
+        if (methodSelect.value === 'membership') {
+            // Update cash received sesuai grand total
+            const grandTotalText = document.getElementById('grand-total').innerText;
+            const cleaned = grandTotalText.replace(/[^\d]/g, '');
+            const grandTotalValue = parseFloat(cleaned);
+            cashReceived.value = grandTotalValue || 0;
+            cashChange.value = 'Rp 0';
+        }
+    }
+
+    // Observer untuk memantau perubahan grand total
+    if (grandTotal) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                    updateGrandTotalAndCashFields();
+                }
+            });
+        });
+
+        observer.observe(grandTotal, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+    }
 </script>
 <script>
     const searchInput = document.getElementById('search-product');
@@ -722,7 +850,7 @@
     }
 }
 </script>
-<script>
+{{-- <script>
     function scanUID() {
     const uid = document.getElementById('uidInput').value.trim();
     const infoContainer = document.getElementById('memberInfo');
@@ -803,5 +931,5 @@ document.getElementById('scanMemberModal').addEventListener('shown.modal', funct
     document.getElementById('closeBtn').classList.remove('d-none');
 });
 
-</script>
+</script> --}}
 @endsection
