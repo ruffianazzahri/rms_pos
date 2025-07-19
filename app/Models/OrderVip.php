@@ -48,8 +48,9 @@ class OrderVip extends Model
         return $this->belongsTo(CustomerVip::class, 'customer_id');
     }
 
-    public function orderDetails()
-    {
-        return $this->hasMany(OrderDetails::class);
-    }
+public function orderDetails()
+{
+    return $this->hasMany(OrderVipDetails::class, 'order_id');
+}
+
 }

@@ -18,6 +18,8 @@ use App\Models\CustomerVip;
 use App\Models\MasterCharge;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Log;
+
 
 class CashierController extends Controller
 {
@@ -66,45 +68,143 @@ class CashierController extends Controller
         return view('cashier.create', compact('orders'));
     }
 
-    public function store(Request $request)
-    {
-        $customerId = $request->customer_id;
+public function store(Request $request)
+{
+    $request->input('order_type'); // 'vip' atau 'regular'
 
-        $request->validate([
-            'items' => 'required|json',
-            'method' => 'required|in:cash,qris,debit,credit,e-wallet',
-        ]);
+    $customerId = $request->customer_id;
 
-        $items = json_decode($request->items, true);
+    $request->validate([
+        'items' => 'required|json',
+        'method' => 'required|in:cash,qris,debit,credit,e-wallet,membership',
+    ]);
 
-        if (empty($items)) {
-            return response()->json(['error' => 'Keranjang kosong!'], 422);
-        }
+    $items = json_decode($request->items, true);
 
-        DB::beginTransaction();
-        try {
-            $subTotal = array_sum(array_column($items, 'subtotal'));
-            $totalQty = array_sum(array_column($items, 'qty'));
+    if (empty($items)) {
+        return response()->json(['error' => 'Keranjang kosong!'], 422);
+    }
 
-            // Ambil charge dari tabel master_charges
-            //$serviceCharge = MasterCharge::where('type', 'service')->where('is_active', 1)->first();
-            $taxCharge     = MasterCharge::where('type', 'tax')->where('is_active', 1)->first();
+    DB::beginTransaction();
+    try {
+        $subTotal = array_sum(array_column($items, 'subtotal'));
+        $totalQty = array_sum(array_column($items, 'qty'));
 
-            // Ambil persentase, fallback ke 0 jika tidak ada
-            //$servicePercent = $serviceCharge?->percentage ?? 0;
-            $taxPercent     = $taxCharge?->percentage ?? 0;
+        // Ambil charge dari tabel master_charges
+        $taxCharge = MasterCharge::where('type', 'tax')->where('is_active', 1)->first();
 
-            // Hitung service charge dari subtotal
-            //$serviceAmount = round(($subTotal) / 100, 2);
+        // Ambil persentase, fallback ke 0 jika tidak ada
+        $taxPercent = $taxCharge?->percentage ?? 0;
 
-            // Hitung pajak dari (subtotal + service charge)
-            $taxBase   = $subTotal;
-            $taxAmount = round(($taxBase * $taxPercent) / 100, 2);
+        // Hitung pajak dari subtotal
+        $taxBase = $subTotal;
+        $taxAmount = round(($taxBase * $taxPercent) / 100, 2);
 
-            // Hitung grand total
-            $grandTotal = $subTotal + $taxAmount;
+        // Hitung grand total
+        $grandTotal = $subTotal + $taxAmount;
 
-            // Simpan ke orders
+        // Cek jika method adalah membership (VIP)
+        if ($request->method === 'membership') {
+            // Validasi customer_id harus ada untuk membership
+            if (!$customerId) {
+                throw new \Exception('Customer ID harus dipilih untuk pembayaran membership.');
+            }
+
+            // Ambil data customer VIP
+            $customerVip = DB::table('customers_vip')->where('id', $customerId)->first();
+
+            if (!$customerVip) {
+                throw new \Exception('Customer VIP tidak ditemukan.');
+            }
+
+            // Cek apakah saldo mencukupi
+            if ($customerVip->balance < $grandTotal) {
+                throw new \Exception('Saldo membership tidak mencukupi. Saldo saat ini: Rp ' . number_format($customerVip->balance, 0, ',', '.'));
+            }
+
+            // === Simpan ke orders_vip
+            $orderVip = DB::table('orders_vip')->insertGetId([
+                'customer_id'    => $customerId,
+                'order_date'     => Carbon::now('Asia/Jakarta'),
+                'order_status'   => 'completed',
+                'total_products' => $totalQty,
+                'sub_total'      => $subTotal,
+                'vat'            => $taxAmount,
+                'invoice_no'     => 'INV-VIP-' . time(),
+                'total'          => $grandTotal,
+                'payment_status' => 'paid',
+                'pay'            => $grandTotal,
+                'due'            => 0,
+                'created_at'     => Carbon::now('Asia/Jakarta'),
+                'updated_at'     => Carbon::now('Asia/Jakarta'),
+            ]);
+
+            // === Kurangi saldo customer VIP
+            DB::table('customers_vip')
+                ->where('id', $customerId)
+                ->decrement('balance', $grandTotal);
+
+            // === Simpan pajak ke tabel order_taxes_vip (jika ada)
+            if ($taxCharge) {
+                DB::table('order_vip_taxes')->insert([
+                    'order_id'    => $orderVip,
+                    'tax_name'    => $taxCharge->name,
+                    'tax_percent' => $taxCharge->percentage,
+                    'tax_amount'  => $taxAmount,
+                    'created_at'  => Carbon::now('Asia/Jakarta'),
+                ]);
+            }
+
+            foreach ($items as $item) {
+             Log::info('Insert ke order_vip_details: ', $item);
+
+                $product = Product::findOrFail($item['id']);
+
+                if ($product->product_store < $item['qty']) {
+                    throw new \Exception("Stok tidak cukup untuk {$product->product_name}.");
+                }
+
+                $product->decrement('product_store', $item['qty']);
+
+                OrderVipDetails::create([
+                    'order_id'   => $orderVip,
+                    'product_id' => $item['id'],
+                    'quantity'   => $item['qty'],
+                    'unitcost'   => $item['price'],
+                    'total'      => $item['subtotal'],
+                ]);
+            }
+
+            // === Simpan metode pembayaran ke payments_vip
+            DB::table('payments_vip')->insert([
+                'order_id' => $orderVip,
+                'method'   => 'membership',
+                'amount'   => $grandTotal,
+                'status'   => 'paid',
+                'paid_at'  => Carbon::now('Asia/Jakarta'),
+                'created_at' => Carbon::now('Asia/Jakarta'),
+                'updated_at' => Carbon::now('Asia/Jakarta'),
+            ]);
+
+            DB::commit();
+
+            // Ambil saldo terbaru setelah transaksi
+            $updatedCustomer = DB::table('customers_vip')->where('id', $customerId)->first();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaksi membership berhasil disimpan!',
+                'order_id' => $orderVip,
+                'invoice_no' => 'INV-VIP-' . time(),
+                'total' => $grandTotal,
+                'remaining_balance' => $updatedCustomer->balance,
+                'customer_name' => $customerVip->name,
+                'order' => OrderVip::with('orderDetails.product')->find($orderVip),
+                'order_type' => 'vip', // Tambahkan ini
+            ]);
+
+        } else {
+            // === Proses normal untuk non-membership
             $order = Order::create([
                 'customer_id'    => $customerId,
                 'order_date'     => Carbon::now('Asia/Jakarta'),
@@ -165,14 +265,17 @@ class CashierController extends Controller
                 'success' => true,
                 'message' => 'Transaksi berhasil disimpan!',
                 'order'   => $order->load('orderDetails.product'),
+                'order_type' => 'regular', // Tambahkan ini
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'error' => 'Gagal menyimpan transaksi: ' . $e->getMessage()
-            ], 500);
         }
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' => 'Gagal menyimpan transaksi: ' . $e->getMessage()
+        ], 500);
     }
+}
 
 
     public function show(Payment $payment)
@@ -269,32 +372,41 @@ class CashierController extends Controller
     //         ->header('Content-Type', 'text/plain; charset=UTF-8');
     // }
 
-    public function printNota(Request $request, $id)
-    {
+public function printNota(Request $request, $id)
+{
+    $type = $request->input('type', 'regular');
+
+    if ($type === 'vip') {
+        $order = OrderVip::with(['orderDetails.product', 'customer'])->findOrFail($id);
+    } else {
         $order = Order::with(['orderDetails.product', 'customer'])->findOrFail($id);
-
-        $pay = $request->input('pay', $order->pay);
-        $change = $request->input('change', max(0, $pay - $order->total));
-        $method = $request->input('method', $order->payment_method ?? 'Tidak diketahui');
-
-        $subtotal = $order->sub_total;
-
-        // Ambil persentase dari master_charges
-        $taxCharge = MasterCharge::where('type', 'tax')->where('is_active', 1)->first();
-        $serviceCharge = MasterCharge::where('type', 'service')->where('is_active', 1)->first();
-
-        $servicePercent = $serviceCharge->percentage ?? 0;
-        $vatPercent = $taxCharge->percentage ?? 0;
-
-        // Hitung service dari subtotal
-        $service = round($subtotal * $servicePercent / 100);
-
-        // Pajak dihitung dari subtotal
-        $vatBase = $subtotal;
-        $vat = round($vatBase * $vatPercent / 100);
-
-        $grandTotal = $vatBase + $vat;
-        $change = $request->input('change', max(0, $pay - $grandTotal));
-        return view('nota.print', compact('order', 'pay', 'change', 'method', 'vat', 'service', 'subtotal', 'grandTotal'));
     }
+
+    $method = $request->input('method', $order->payment_method ?? 'Tidak diketahui');
+    $pay = (int) $request->input('pay', $order->pay ?? 0);
+    $change = (int) $request->input('change', 0);
+
+    $subtotal = $order->sub_total ?? 0;
+
+    $vat = (int) $request->input('tax', 0);
+
+    $service = 0;
+
+    if ($vat === 0) {
+        $taxCharge = MasterCharge::where('type', 'tax')->where('is_active', 1)->first();
+        $vat = round($subtotal * ($taxCharge->percentage ?? 0) / 100);
+    }
+
+    // Total akhir
+    $grandTotal = $subtotal + $vat;
+    if ($change === 0) {
+        $change = max(0, $pay - $grandTotal);
+    }
+
+    return view('nota.print', compact(
+        'order', 'pay', 'change', 'method',
+        'vat', 'service', 'subtotal', 'grandTotal'
+    ));
+}
+
 }

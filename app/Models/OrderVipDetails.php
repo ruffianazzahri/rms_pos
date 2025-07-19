@@ -24,6 +24,7 @@ class OrderVipDetails extends Model
     ];
     protected $with = ['product'];
 
+
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id', 'id');

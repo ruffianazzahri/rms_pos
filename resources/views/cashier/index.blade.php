@@ -353,7 +353,13 @@
             const isCashEmpty = method === 'cash' && (!cashReceived || parseFloat(cashReceived) <= 0);
 
             // cek customer belum dipilih (default option disabled biasanya valuenya null atau '')
-            const isCustomerEmpty = !customer;
+            const isCustomerEmpty = !customer || customer === '';
+
+            // Validasi khusus untuk method membership
+            if (method === 'membership' && isCustomerEmpty) {
+                alert('Customer harus dipilih untuk pembayaran membership.');
+                return;
+            }
 
             // jika SEMUA kosong
             if (isCustomerEmpty && isItemsEmpty && method === 'cash' && isCashEmpty) {
@@ -385,6 +391,36 @@
     const form = document.getElementById('form-transaksi');
     const formData = new FormData(form);
 
+    // Debug: Log form data untuk memastikan customer_id ter-submit
+    console.log('Form data sebelum submit:');
+    for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+    }
+
+    // Pastikan customer_id ter-submit dengan benar
+    const customerSelect = document.getElementById('customer_id');
+    const customerId = customerSelect.value;
+
+    if (!customerId && document.querySelector('select[name="method"]').value === 'membership') {
+        alert('Customer ID tidak ditemukan untuk pembayaran membership');
+        return;
+    }
+
+    // Jika customer_id tidak ada di FormData, tambahkan manual
+    if (!formData.get('customer_id') && customerId) {
+        formData.set('customer_id', customerId);
+    }
+
+        const method = document.querySelector('select[name="method"]')?.value || 'cash';
+        const orderType = method === 'membership' ? 'vip' : 'regular';
+        formData.set('order_type', orderType);
+        window.lastOrderType = orderType;
+
+        console.log('Metode pembayaran:', method);
+        console.log('Order type terdeteksi:', orderType);
+
+
+
     fetch(form.action, {
         method: 'POST',
         headers: {
@@ -398,6 +434,7 @@
         if (data.success) {
             $('#confirmModal').modal('hide');
             const order = data.order;
+
             const method = document.querySelector('select[name="method"]').value;
             const uangDiterima = parseInt(document.getElementById('cash-received').value || '0');
             let kembalian = 0;
@@ -405,13 +442,29 @@
             const pajak = parseInt(document.getElementById('tax-amount')?.textContent.replace(/[^\d]/g, '') || 0);
             const jasa = parseInt(document.getElementById('service-amount')?.textContent.replace(/[^\d]/g, '') || 0);
 
+            // Handle response yang berbeda untuk membership vs non-membership
+            let totalAkhir;
+            let orderDetails = [];
+
+            if (method === 'membership') {
+                // Untuk membership, response mungkin tidak memiliki struktur yang sama
+
+                totalAkhir = order.total || data.total || 0;
+                orderDetails = order.order_details || [];
+                // Tampilkan sisa saldo jika ada
+                if (data.remaining_balance !== undefined) {
+                    console.log('Sisa saldo setelah transaksi:', data.remaining_balance);
+                }
+            } else {
+                // Untuk non-membership, gunakan struktur order biasa
                 if (typeof order.total === 'undefined') {
                     console.error('order.total tidak tersedia di response:', order);
                     alert('Data transaksi tidak lengkap (total).');
                     return;
                 }
-
-            const totalAkhir = order.total; // karena sudah termasuk pajak
+                totalAkhir = order.total;
+                orderDetails = order.order_details || [];
+            }
 
             if (method === 'cash') {
                 kembalian = uangDiterima - totalAkhir;
@@ -420,18 +473,24 @@
             console.log(['uang diterima', uangDiterima, 'kembalian', kembalian, 'totalakhir', totalAkhir]);
 
             let html = `
-            <p><strong>Invoice:</strong> ${order.invoice_no}</p>
-            <p><strong>Tanggal:</strong> ${new Date(order.order_date).toLocaleString()}</p>
-            <p><strong>Total Produk:</strong> ${order.total_products}</p>
+            <p><strong>Invoice:</strong> ${order?.invoice_no || 'N/A'}</p>
+            <p><strong>Tanggal:</strong> ${order?.order_date ? new Date(order.order_date).toLocaleString() : new Date().toLocaleString()}</p>
+            <p><strong>Total Produk:</strong> ${order?.total_products || 'N/A'}</p>
             <p><strong>Pajak:</strong> Rp ${pajak.toLocaleString()}</p>
-            <p><strong>Total Harga:</strong> Rp ${order.total.toLocaleString()}</p>
-            <p><strong>Status Pembayaran:</strong> ${order.payment_status}</p>
+            <p><strong>Total Harga:</strong> Rp ${totalAkhir.toLocaleString()}</p>
+            <p><strong>Status Pembayaran:</strong> ${order?.payment_status || 'paid'}</p>
             `;
 
             if (method === 'cash') {
                 html += `
                     <p><strong>Uang Diterima:</strong> Rp ${uangDiterima.toLocaleString()}</p>
                     <p><strong>Kembalian:</strong> Rp ${kembalian >= 0 ? kembalian.toLocaleString() : 0}</p>
+                `;
+            }
+
+            if (method === 'membership' && data.remaining_balance !== undefined) {
+                html += `
+                    <p><strong>Sisa Saldo:</strong> Rp ${data.remaining_balance.toLocaleString()}</p>
                 `;
             }
 
@@ -451,7 +510,7 @@
                         <tbody>
             `;
 
-            order.order_details.forEach(detail => {
+            orderDetails.forEach(detail => {
                 html += `
                     <tr>
                         <td>${detail.product.product_name}</td>
@@ -470,14 +529,16 @@
 
             document.getElementById('detailModalBody').innerHTML = html;
             $('#detailModal').modal('show');
-              window.lastOrderId = order.id;
+            window.lastOrderId = order?.id || data.order_id;
+        } else {
+            // Tampilkan error dari server
+            alert('Error: ' + (data.error || 'Terjadi kesalahan'));
         }
     })
-
-        .catch(err => {
-            console.error(err);
-            alert('Terjadi kesalahan.');
-        });
+    .catch(err => {
+        console.error(err);
+        alert('Terjadi kesalahan saat memproses transaksi.');
+    });
     });
 
 // Reload halaman setelah modal detail ditutup
@@ -603,34 +664,30 @@
 <script>
     document.getElementById('printNota').addEventListener('click', function () {
     const orderId = window.lastOrderId;
+    const orderType = window.lastOrderType || 'regular'; // 'vip' jika membership
 
     const methodSelect = document.querySelector('select[name="method"]');
     const cashReceived = document.getElementById('cash-received');
     const changeInput = document.getElementById('cash-change');
     const subtotalInput = document.getElementById('subtotal-amount');
-    //const servicePercentageInput = document.getElementById('service-percentage');
     const taxPercentageInput = document.getElementById('tax-percentage');
 
     const pay = cashReceived?.value ? parseInt(cashReceived.value.replace(/[^\d]/g, '')) || 0 : 0;
     const change = changeInput?.value ? parseInt(changeInput.value.replace(/[^\d]/g, '')) || 0 : 0;
     const method = methodSelect?.value || 'Tidak diketahui';
-
     const subtotal = subtotalInput?.value ? parseInt(subtotalInput.value.replace(/[^\d]/g, '')) || 0 : 0;
-    //const servicePercent = servicePercentageInput?.value ? parseFloat(servicePercentageInput.value) || 0 : 0;
     const taxPercent = taxPercentageInput?.value ? parseFloat(taxPercentageInput.value) || 0 : 0;
 
-    //const serviceAmount = Math.round(subtotal * servicePercent / 100);
-    const taxBase = subtotal;
-    const taxAmount = Math.round(taxBase * taxPercent / 100);
+    const taxAmount = Math.round(subtotal * taxPercent / 100);
 
     const params = new URLSearchParams({
-        pay: pay,
-        change: change,
-        method: method,
+        pay,
+        change,
+        method,
         tax: taxAmount,
+        type: orderType // <-- tambahkan ini
     }).toString();
 
-    // Buka jendela untuk cetak nota
     const printWindow = window.open(`/print-nota/${orderId}?${params}`, 'Print Nota', 'width=300,height=600');
 });
 
