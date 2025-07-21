@@ -163,26 +163,42 @@
 
     <div class="row mt-4">
         {{-- === MENU/PRODUK DI KIRI === --}}
-        <div class="col-md-7">
+        <div class="col-md-6">
             <div class="menu">
                 <h4 class="mb-3">📦 Menu / Produk</h4>
 
                 <input type="text" id="search-product" class="form-control mb-3" placeholder="Cari produk...">
 
+                <div class="mb-3">
+                    <strong>Kategori:</strong>
+                    <div class="btn-group flex-wrap">
+                        <button class="btn btn-outline-dark btn-sm category-filter active"
+                            data-category="all">Semua</button>
+                        @foreach($categories as $category)
+                        <button class="btn btn-outline-dark btn-sm category-filter" data-category="{{ $category->id }}">
+                            {{ $category->name }}
+                        </button>
+                        @endforeach
+                    </div>
+                </div>
+
                 <div class="product-list-scrollable">
                     <div class="row">
                         @foreach($products as $product)
-                        <div class="col-6 col-md-4 col-lg-3 mb-3">
+                        <div class="col-6 col-md-4 col-lg-3 mb-3 product-item"
+                            data-category="{{ $product->category_id }}">
                             <button class="product-card add-item w-100 border-0" data-id="{{ $product->id }}"
                                 data-name="{{ $product->product_name }}" data-price="{{ $product->selling_price }}"
                                 style="cursor: pointer;">
 
                                 <img src="{{ $product->product_image ? asset('storage/products/' . $product->product_image) : asset('assets/images/product/default.webp') }}"
-                                    alt="{{ $product->product_name }}">
+                                    alt="{{ $product->product_name }}"
+                                    style="width: 100%; height: 130px; object-fit: cover; border-radius: .75rem .75rem 0 0;">
 
                                 <div class="p-2">
                                     <div class="product-name mb-1">{{ $product->product_name }}</div>
-                                    <div class="product-price">Rp {{ number_format($product->selling_price) }}</div>
+                                    <div class="product-price font-weight-bold">Rp {{
+                                        number_format($product->selling_price) }}</div>
                                 </div>
                             </button>
                         </div>
@@ -195,7 +211,7 @@
 
 
         {{-- === KERANJANG DAN FORM DI KANAN === --}}
-        <div class="col-md-5">
+        <div class="col-md-6">
             <div class="cart-box p-3">
                 <h4>🛒 Keranjang</h4>
 
@@ -355,6 +371,32 @@
         margin-top: 2rem;
     }
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+    const filterButtons = document.querySelectorAll('.category-filter');
+    const products = document.querySelectorAll('.product-item');
+
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const categoryId = button.getAttribute('data-category');
+
+            // Aktifkan tombol
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            // Filter produk
+            products.forEach(product => {
+                const productCategory = product.getAttribute('data-category');
+                if (categoryId === 'all' || productCategory === categoryId) {
+                    product.style.display = '';
+                } else {
+                    product.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
 
 <script>
     const methodSelect = document.querySelector('select[name="method"]');

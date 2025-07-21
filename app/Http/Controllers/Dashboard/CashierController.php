@@ -19,47 +19,36 @@ use App\Models\MasterCharge;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\Category;
 
 class CashierController extends Controller
 {
-    public function index()
-    {
-        $products = Product::where('product_store', '>', 0)->get();
+public function index()
+{
+    $products = Product::where('product_store', '>', 0)->get();
+    $categories = Category::all(); // Tambahkan ini
 
-        $restaurant_tax = MasterCharge::where('name', 'Pajak Barang dan Jasa Tertentu (PBJT) 10%')
-            ->value('percentage');
+    $restaurant_tax = MasterCharge::where('name', 'Pajak Barang dan Jasa Tertentu (PBJT) 10%')->value('percentage');
+    $service_charge = MasterCharge::where('name', 'Service Charge')->value('percentage');
 
-        $service_charge = MasterCharge::where('name', 'Service Charge')
-            ->value('percentage');
+    $regularCustomers = Customer::select('id', 'name')->get();
+    $vipCustomers = CustomerVip::select('id', 'name')->get()->map(function ($customer) {
+        $customer->name .= ' - MEMBER VIP';
+        return $customer;
+    });
 
-        // Ambil data dari tabel customers biasa
-        $regularCustomers = Customer::select('id', 'name')->get();
+    $customers = $regularCustomers->concat($vipCustomers)->sortBy('name')->values();
 
-        $paymentMethod = PaymentMethod::select('id', 'method_name')->get();
+    return view('cashier.index', [
+        'products' => $products,
+        'categories' => $categories, // kirim ke view
+        'customers' => $customers,
+        'restaurant_tax' => $restaurant_tax,
+        'service_charge' => $service_charge,
+        'method' => PaymentMethod::select('id', 'method_name')->get(),
+    ]);
+}
 
-        //dd($paymentMethod);
-
-
-        // Ambil data dari customers_vip dan tambahkan label
-        $vipCustomers = CustomerVip::select('id', 'name')
-            ->get()
-            ->map(function ($customer) {
-                $customer->name .= ' - MEMBER VIP';
-                return $customer;
-            });
-
-        // Gabungkan dan urutkan
-        $customers = $regularCustomers->concat($vipCustomers)->sortBy('name')->values();
-
-        return view('cashier.index', [
-            'products' => $products,
-            'customers' => $customers,
-            'restaurant_tax' => $restaurant_tax,
-            'service_charge' => $service_charge,
-            'method' => $paymentMethod,
-        ]);
-    }
 
 
     public function create()
