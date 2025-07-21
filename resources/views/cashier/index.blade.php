@@ -7,201 +7,262 @@
 @endsection
 
 @section('container')
-<div class="container">
-    <h2>🧾 Sistem Kasir RMS Batam</h2>
-    <p class="fw-bold">Jika salah satu produk tidak muncul, kemungkinan stok habis. Harap cek stok berkala <a
-            href="{{ route('products.index') }}" target="_blank">
-            disini.
-        </a></p>
+<style>
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 1rem;
+    }
+
+    .product-button {
+        background-color: #FFB22C !important;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .product-button:hover {
+        background-color: #ffd48a !important;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        margin-bottom: 8px;
+        border-radius: 10px;
+    }
+
+    .product-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .product-price {
+        font-size: 0.85rem;
+        color: #555;
+    }
+
+    .cart-box {
+        background-color: #fff8e1;
+        border-radius: 12px;
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    #cart-table thead {
+        background: linear-gradient(to right, #FB9E3A, #E6521F);
+        color: white;
+        font-weight: bold;
+    }
+
+    #cart-table td,
+    #cart-table th {
+        text-align: center;
+        vertical-align: middle;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    #cart-table tbody tr:hover {
+        background-color: #fff3cd;
+    }
+
+    .btn-sm {
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+
+    .product-card {
+        border: 1px solid #ddd;
+        border-radius: 0.75rem;
+        transition: all 0.2s ease-in-out;
+        background-color: #fff;
+        overflow: hidden;
+    }
+
+    .product-card:hover {
+        background-color: #fff3e0;
+        /* Oranye muda */
+        box-shadow: 0 6px 12px rgba(255, 165, 0, 0.3);
+        transform: translateY(-4px);
+    }
+
+    .product-card img {
+        height: 130px;
+        object-fit: cover;
+        width: 100%;
+        border-radius: 0.75rem 0.75rem 0 0;
+    }
+
+    .product-card .product-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .product-card .product-price {
+        font-weight: 700;
+        color: #fd7e14;
+        /* Oranye khas Bootstrap */
+    }
+
+    .product-card:hover .product-price {
+        color: #e8590c;
+        /* Oranye lebih gelap saat hover */
+    }
+
+    .add-item {
+        text-align: left;
+        padding: 0;
+    }
+
+    .add-item:focus {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .product-list-scrollable {
+        max-height: 500px;
+        /* Sesuaikan sesuai layout */
+        overflow-y: auto;
+        padding-right: 4px;
+        /* untuk menghindari overlap scrollbar */
+    }
+
+    /* Optional scrollbar styling (for WebKit browsers like Chrome) */
+    .product-list-scrollable::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .product-list-scrollable::-webkit-scrollbar-thumb {
+        background-color: #fd7e14;
+        border-radius: 3px;
+    }
+
+    .product-list-scrollable::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+</style>
+<div class="container-fluid">
+    <h2 class="mt-3">🧾 Sistem Kasir RMS Batam</h2>
+    <p class="fw-bold">
+        Jika salah satu produk tidak muncul, kemungkinan stok habis. Harap cek stok berkala
+        <a href="{{ route('products.index') }}" target="_blank">disini.</a>
+    </p>
+
     @if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
+    <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
     @if(session('error'))
-    <div class="alert alert-danger">
-        {{ session('error') }}
-    </div>
+    <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
+    <div class="row mt-4">
+        {{-- === MENU/PRODUK DI KIRI === --}}
+        <div class="col-md-7">
+            <div class="menu">
+                <h4 class="mb-3">📦 Menu / Produk</h4>
 
+                <input type="text" id="search-product" class="form-control mb-3" placeholder="Cari produk...">
 
-    {{-- Daftar Produk --}}
-    <div class="menu">
-        <h4>Menu / Produk</h4>
-        <div class="grid">
-            <div class="mb-3">
-                <input type="text" id="search-product" class="form-control" placeholder="Cari produk...">
+                <div class="product-list-scrollable">
+                    <div class="row">
+                        @foreach($products as $product)
+                        <div class="col-6 col-md-4 col-lg-3 mb-3">
+                            <button class="product-card add-item w-100 border-0" data-id="{{ $product->id }}"
+                                data-name="{{ $product->product_name }}" data-price="{{ $product->selling_price }}"
+                                style="cursor: pointer;">
+
+                                <img src="{{ $product->product_image ? asset('storage/products/' . $product->product_image) : asset('assets/images/product/default.webp') }}"
+                                    alt="{{ $product->product_name }}">
+
+                                <div class="p-2">
+                                    <div class="product-name mb-1">{{ $product->product_name }}</div>
+                                    <div class="product-price">Rp {{ number_format($product->selling_price) }}</div>
+                                </div>
+                            </button>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
             </div>
+        </div>
 
-            @foreach($products as $product)
-            <style>
-                .product-button {
-                    transition: all 0.3s ease;
-                    border-radius: 15px;
-                    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-                    background-color: #FFB22C !important;
-                    border: 1px solid #dee2e6;
-                }
 
-                .product-button:hover {
-                    background-color: #ffd48a !important;
-                    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-                    transform: translateY(-3px) scale(1.02);
-                }
 
-                .product-button:active {
-                    transform: scale(0.98);
-                    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-                }
+        {{-- === KERANJANG DAN FORM DI KANAN === --}}
+        <div class="col-md-5">
+            <div class="cart-box p-3">
+                <h4>🛒 Keranjang</h4>
 
-                .product-image {
-                    width: 100px;
-                    height: 100px;
-                    object-fit: cover;
-                    border-radius: 10px;
-                    display: block;
-                    margin: 0 auto 5px;
-                }
+                <table class="table table-bordered table-sm mt-3" id="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Subtotal</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
 
-                .product-name {
-                    font-weight: 500;
-                }
+                <input type="hidden" id="tax-percentage" value="{{ $restaurant_tax }}">
+                <input type="hidden" id="service-percentage" value="{{ $service_charge }}">
 
-                .product-price {
-                    font-size: 0.85rem;
-                    color: #6c757d;
-                }
-            </style>
+                <h5 class="mt-3">Subtotal: Rp <span id="total">0</span></h5>
+                <h5 class="d-none">Jasa Pelayanan (10%): Rp <span id="service-amount">0</span></h5>
+                <h5>Pajak Restoran (10%): Rp <span id="tax-amount">0</span></h5>
+                <h5>Total Bayar: Rp <span id="grand-total"></span></h5>
 
-            <button class="btn product-button text-center w-100 mb-3 add-item" data-id="{{ $product->id }}"
-                data-name="{{ $product->product_name }}" data-price="{{ $product->selling_price }}">
+                <form method="POST" action="{{ route('cashier.transaksi') }}" id="form-transaksi" class="mt-3">
+                    @csrf
+                    <div class="mb-2">
+                        <label>Apakah mempunyai member?</label><br>
+                        <button type="button" class="btn btn-success btn-sm" onclick="handleMember(true)">Iya</button>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="handleMember(false)">Tidak</button>
+                    </div>
 
-                <img src="{{ $product->product_image ? asset('storage/products/' . $product->product_image) : asset('assets/images/product/default.webp') }}"
-                    alt="{{ $product->product_name }}" class="product-image">
+                    <select class="form-control mb-2" id="customer_id" name="customer_id" required
+                        style="display: none;">
+                        <option value="" readonly selected>-- Pilih Customer --</option>
+                        @foreach ($customers as $customer)
+                        <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
+                        @endforeach
+                    </select>
 
-                <div class="product-name">{{ $product->product_name }}</div>
-                <div class="product-price">Rp {{ number_format($product->selling_price) }}</div>
-            </button>
+                    <input type="hidden" name="items" id="items-input">
 
-            @endforeach
+                    <label for="method">Metode Pembayaran:</label>
+                    <select name="method" class="form-control mb-2" required id="method">
+                        <option value="cash" selected>Cash</option>
+                        <option value="qris">QRIS</option>
+                        <option value="debit">Debit</option>
+                        <option value="credit">Credit</option>
+                        <option value="e-wallet">E-Wallet</option>
+                        <option value="membership">Membership</option>
+                    </select>
+
+                    <div id="cash-fields" style="display:none;">
+                        <label for="cash_received" id="uangditerima">Uang Diterima (Rp):</label>
+                        <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal"
+                            min="0">
+                        <label class="mt-2" id="kembalian-text">Kembalian:</label>
+                        <input type="text" id="cash-change" class="form-control" readonly>
+                    </div>
+
+                    <button class="btn btn-primary mt-3 w-100" type="button" id="openConfirmModal">💰 Bayar</button>
+                </form>
+            </div>
         </div>
     </div>
-
-
-    {{-- Keranjang --}}
-    <div class="cart">
-        <h4>🛒 Keranjang</h4>
-        <style>
-            #cart-table {
-                background-color: #fff8e1;
-                /* Lembut */
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-            }
-
-            #cart-table thead {
-                background: linear-gradient(to right, #FB9E3A, #E6521F);
-                color: #ffffff;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-
-            #cart-table th,
-            #cart-table td {
-                vertical-align: middle !important;
-                text-align: center;
-                padding: 12px;
-                font-size: 0.95rem;
-            }
-
-            #cart-table tbody tr:hover {
-                background-color: #fcef91;
-                /* Hover kuning lembut */
-                transition: background-color 0.3s ease;
-            }
-
-            #cart-table td:nth-child(3) {
-                font-weight: bold;
-                color: #EA2F14;
-                /* Subtotal oranye-merah */
-            }
-
-            .btn-action {
-                background-color: #FB9E3A;
-                border: none;
-                color: white;
-                padding: 6px 10px;
-                border-radius: 6px;
-                font-size: 0.85rem;
-                transition: 0.2s;
-            }
-
-            .btn-action:hover {
-                background-color: #EA2F14;
-                box-shadow: 0 4px 12px rgba(234, 47, 20, 0.3);
-                transform: scale(1.05);
-            }
-        </style>
-
-        <table class="table table-bordered table-hover mb-0" id="cart-table">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Qty</th>
-                    <th>Subtotal</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-        <input type="hidden" id="tax-percentage" value="{{ $restaurant_tax }}">
-        <input type="hidden" id="service-percentage" value="{{ $service_charge }}">
-        <h5 class="mt-3">Subtotal: Rp <span id="total">0</span></h5>
-        <h5 class="d-none">Jasa Pelayanan (10%): Rp <span id="service-amount">0</span></h5>
-        <h5>Pajak Restoran (10%): Rp <span id="tax-amount">0</span></h5>
-        <h5>Total Bayar: Rp <span id="grand-total"></span></h5>
-        {{-- Pembayaran --}}
-        <form method="POST" action="{{ route('cashier.transaksi') }}" id="form-transaksi">
-            @csrf
-            <div class="mb-2">
-                <label>Apakah mempunyai member?</label><br>
-                <button type="button" class="btn btn-success btn-sm" onclick="handleMember(true)">Iya</button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="handleMember(false)">Tidak</button>
-            </div>
-
-            <select class="form-control" id="customer_id" name="customer_id" required style="display: none;">
-                <option value="" readonly selected>-- Select Customer --</option>
-                @foreach ($customers as $customer)
-                <option value="{{ $customer['id'] }}">{{ $customer['name'] }}</option>
-                @endforeach
-            </select>
-
-
-    </div>
-    <input type="hidden" name="items" id="items-input">
-    <label for="method">Metode Pembayaran:</label>
-    <select name="method" class="form-control" required id="method">
-        <option value="cash" selected>Cash</option>
-        <option value="qris">QRIS</option>
-        <option value="debit">Debit</option>
-        <option value="credit">Credit</option>
-        <option value="e-wallet">E-Wallet</option>
-        <option value="membership">Membership</option>
-    </select>
-
-    <div id="cash-fields" style="display:none;" class="mt-3">
-        <label for="cash_received" id="uangditerima">Uang Diterima (Rp):</label>
-        <input type="number" id="cash-received" class="form-control" placeholder="Masukkan nominal" min="0">
-        <label class="mt-2" id="kembalian-text">Kembalian:</label>
-        <input type="text" id="cash-change" class="form-control" readonly>
-    </div>
-    <button class="btn btn-primary mt-3" type="button" id="openConfirmModal">💰 Bayar</button>
-    </form>
 </div>
+
 </div>
 
 <!-- Modal Konfirmasi -->

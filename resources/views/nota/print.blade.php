@@ -113,7 +113,7 @@
         @if ($method === 'membership')
         <div class="flex"><span>Sisa Saldo:</span><span>Rp{{ number_format($remainingBalance, 0, ',', '.') }}</span>
         </div>
-        @else
+        @elseif ($method === 'cash')
         <div class="flex"><span>Kembalian:</span><span>Rp{{ number_format($change, 0, ',', '.') }}</span></div>
         @endif
     </div>

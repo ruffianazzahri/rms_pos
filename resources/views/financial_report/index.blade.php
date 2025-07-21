@@ -205,7 +205,6 @@
 
                 <td>
                     @php
-
                     $image = $journal->image;
                     @endphp
 
@@ -214,7 +213,7 @@
                         data-toggle="modal" data-target="#imageModal">
                         <i class="fas fa-eye"></i>
                     </button>
-                    @elseif($image === 'Otomatis dari data orders' || $image === 'Otomatis dari data orders membership')
+                    @elseif(Str::contains($image, 'Otomatis dari data orders'))
                     {{ $image }}
                     @else
                     -

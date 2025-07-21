@@ -124,27 +124,107 @@ class FinancialReportController extends Controller
     //     ]);
     // }
 
+// public function index(Request $request)
+// {
+//     $month = $request->input('month', date('m'));
+//     $year = $request->input('year', date('Y'));
+
+//     // Ambil data pendapatan dari tabel orders dan orders_vip
+//     $rawQuery = "
+//         (
+//             SELECT
+//                 NULL AS order_id,
+//                 DATE(o.order_date) AS date,
+//                 'Pendapatan (Orders)' AS account,
+//                 0 AS debit,
+//                 SUM(o.total) AS credit,
+//                 'Omzet Penjualan (Termasuk PBJT 10%)' AS description,
+//                 NULL AS invoice_no,
+//                 NULL AS order_date,
+//                 'Otomatis dari data orders' AS image
+//             FROM orders o
+//             WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+//             GROUP BY DATE(o.order_date)
+//         )
+//         UNION ALL
+//         (
+//             SELECT
+//                 NULL AS order_id,
+//                 DATE(o.order_date) AS date,
+//                 'Pendapatan (Membership)' AS account,
+//                 0 AS debit,
+//                 SUM(o.total) AS credit,
+//                 'Omzet Penjualan - MEMBERSHIP (Termasuk PBJT 10%)' AS description,
+//                 NULL AS invoice_no,
+//                 NULL AS order_date,
+//                 'Otomatis dari data orders membership' AS image
+//             FROM orders_vip o
+//             WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+//             GROUP BY DATE(o.order_date)
+//         )
+//         ORDER BY date ASC
+//         LIMIT 30;
+//     ";
+
+//     $journals = DB::select($rawQuery, [$month, $year, $month, $year]);
+
+//     // Total credit dari orders
+//     $totalOrdersQuery = "
+//         SELECT COALESCE(SUM(total), 0) as total_credit_orders
+//         FROM orders
+//         WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+//     ";
+//     $totalCreditOrders = DB::select($totalOrdersQuery, [$month, $year])[0]->total_credit_orders;
+
+//     // Total credit dari orders_vip
+//     $totalOrdersVipQuery = "
+//         SELECT COALESCE(SUM(total), 0) as total_credit_orders_vip
+//         FROM orders_vip
+//         WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+//     ";
+//     $totalCreditOrdersVip = DB::select($totalOrdersVipQuery, [$month, $year])[0]->total_credit_orders_vip;
+
+//     // Total pajak dari order_taxes
+//     $totalTaxQuery = "
+//         SELECT COALESCE(SUM(tax_amount), 0) as total_tax
+//         FROM order_taxes
+//         WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?
+//     ";
+//     $totalTax = DB::select($totalTaxQuery, [$month, $year])[0]->total_tax;
+
+//     // Total pemasukan = credit orders + credit orders_vip + pajak
+//     $totalPemasukan = $totalCreditOrders + $totalCreditOrdersVip;
+
+//     return view('financial_report.index', [
+//         'journals' => $journals,
+//         'totalCredit' => $totalPemasukan,
+//         'filterMonth' => $month,
+//         'filterYear' => $year,
+//     ]);
+// }
+
 public function index(Request $request)
 {
     $month = $request->input('month', date('m'));
     $year = $request->input('year', date('Y'));
 
-    // Ambil data pendapatan dari tabel orders dan orders_vip
+    // Ambil data pendapatan dari tabel orders berdasarkan payment method dan orders_vip
     $rawQuery = "
         (
             SELECT
                 NULL AS order_id,
                 DATE(o.order_date) AS date,
-                'Pendapatan (Orders)' AS account,
+                CONCAT('Pendapatan (', UPPER(p.method), ')') AS account,
                 0 AS debit,
                 SUM(o.total) AS credit,
-                'Omzet Penjualan (Termasuk PBJT 10%)' AS description,
+                CONCAT('Omzet Penjualan ', UPPER(p.method), ' (Termasuk PBJT 10%)') AS description,
                 NULL AS invoice_no,
                 NULL AS order_date,
-                'Otomatis dari data orders' AS image
+                CONCAT('Otomatis dari data orders - ', UPPER(p.method)) AS image
             FROM orders o
+            INNER JOIN payments p ON o.id = p.order_id
             WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
-            GROUP BY DATE(o.order_date)
+            GROUP BY DATE(o.order_date), p.method
         )
         UNION ALL
         (
@@ -162,19 +242,20 @@ public function index(Request $request)
             WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
             GROUP BY DATE(o.order_date)
         )
-        ORDER BY date ASC
-        LIMIT 30;
+        ORDER BY date ASC, account ASC
+        LIMIT 50;
     ";
 
     $journals = DB::select($rawQuery, [$month, $year, $month, $year]);
 
-    // Total credit dari orders
-    $totalOrdersQuery = "
-        SELECT COALESCE(SUM(total), 0) as total_credit_orders
-        FROM orders
-        WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+    // Total credit dari orders berdasarkan payment method
+    $totalOrdersByMethodQuery = "
+        SELECT COALESCE(SUM(o.total), 0) as total_credit_orders
+        FROM orders o
+        INNER JOIN payments p ON o.id = p.order_id
+        WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
     ";
-    $totalCreditOrders = DB::select($totalOrdersQuery, [$month, $year])[0]->total_credit_orders;
+    $totalCreditOrders = DB::select($totalOrdersByMethodQuery, [$month, $year])[0]->total_credit_orders;
 
     // Total credit dari orders_vip
     $totalOrdersVipQuery = "
@@ -184,6 +265,18 @@ public function index(Request $request)
     ";
     $totalCreditOrdersVip = DB::select($totalOrdersVipQuery, [$month, $year])[0]->total_credit_orders_vip;
 
+    // Detail breakdown berdasarkan payment method
+    $paymentBreakdownQuery = "
+        SELECT
+            p.method,
+            COALESCE(SUM(o.total), 0) as total
+        FROM orders o
+        INNER JOIN payments p ON o.id = p.order_id
+        WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+        GROUP BY p.method
+    ";
+    $paymentBreakdown = DB::select($paymentBreakdownQuery, [$month, $year]);
+
     // Total pajak dari order_taxes
     $totalTaxQuery = "
         SELECT COALESCE(SUM(tax_amount), 0) as total_tax
@@ -192,12 +285,13 @@ public function index(Request $request)
     ";
     $totalTax = DB::select($totalTaxQuery, [$month, $year])[0]->total_tax;
 
-    // Total pemasukan = credit orders + credit orders_vip + pajak
+    // Total pemasukan = credit orders + credit orders_vip
     $totalPemasukan = $totalCreditOrders + $totalCreditOrdersVip;
 
     return view('financial_report.index', [
         'journals' => $journals,
         'totalCredit' => $totalPemasukan,
+        'paymentBreakdown' => $paymentBreakdown,
         'filterMonth' => $month,
         'filterYear' => $year,
     ]);
