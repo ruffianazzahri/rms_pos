@@ -309,10 +309,9 @@ public function detailByProduk(Request $request)
         GROUP_CONCAT(CONCAT(p.product_name, ' (', od.quantity, ')') ORDER BY p.product_name SEPARATOR ', ') AS product,
         SUM(od.quantity) AS quantity,
         GROUP_CONCAT(DISTINCT pay.method ORDER BY pay.method SEPARATOR ', ') AS payment_method,
-        SUM(od.unitcost) AS sale_subtotal,
+        GROUP_CONCAT(CONCAT(p.product_name, ' : ', FORMAT(od.unitcost/od.quantity, 0), ' x ', od.quantity) ORDER BY p.product_name SEPARATOR ', ') AS sale_subtotal,
         o.total AS sale_total,
-        ROUND(SUM(od.unitcost) * (SELECT MAX(CASE WHEN type = 'service' THEN percentage END) FROM master_charges) / 100, 0) AS service_charge,
-        ROUND((SUM(od.unitcost) + SUM(od.unitcost) * (SELECT MAX(CASE WHEN type = 'service' THEN percentage END) FROM master_charges) / 100) * (SELECT MAX(CASE WHEN type = 'tax' THEN percentage END) FROM master_charges) / 100, 0) AS tax,
+        ROUND(SUM(od.unitcost) * (SELECT MAX(CASE WHEN type = 'tax' THEN percentage END) FROM master_charges) / 100, 0) AS tax,
         o.total AS total,
         'Omzet Penjualan (Termasuk PBJT 10%)' AS description,
         o.order_date AS sale_datetime,
@@ -322,6 +321,10 @@ public function detailByProduk(Request $request)
     LEFT JOIN products p ON p.id = od.product_id
     LEFT JOIN payments pay ON pay.order_id = o.id
     WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+        AND p.product_name IS NOT NULL
+        AND od.quantity IS NOT NULL
+        AND od.unitcost IS NOT NULL
+        AND pay.method IS NOT NULL
     GROUP BY o.id, o.order_date, o.total
 
     UNION ALL
@@ -331,19 +334,23 @@ public function detailByProduk(Request $request)
         DATE_FORMAT(ov.order_date, '%d %M %Y - %H:%i') AS date,
         GROUP_CONCAT(CONCAT(p.product_name, ' (', ovd.quantity, ')') ORDER BY p.product_name SEPARATOR ', ') AS product,
         SUM(ovd.quantity) AS quantity,
-        'MEMBERSHIP' AS payment_method,
-        SUM(ovd.unitcost) AS sale_subtotal,
+        GROUP_CONCAT(DISTINCT pay.method ORDER BY pay.method SEPARATOR ', ') AS payment_method,
+        GROUP_CONCAT(CONCAT(p.product_name, ' : ', FORMAT(ovd.unitcost/ovd.quantity, 0), ' x ', ovd.quantity) ORDER BY p.product_name SEPARATOR ', ') AS sale_subtotal,
         ov.total AS sale_total,
-        ROUND(SUM(ovd.unitcost) * (SELECT MAX(CASE WHEN type = 'service' THEN percentage END) FROM master_charges) / 100, 0) AS service_charge,
-        ROUND((SUM(ovd.unitcost) + SUM(ovd.unitcost) * (SELECT MAX(CASE WHEN type = 'service' THEN percentage END) FROM master_charges) / 100) * (SELECT MAX(CASE WHEN type = 'tax' THEN percentage END) FROM master_charges) / 100, 0) AS tax,
+        ROUND(SUM(ovd.unitcost) * (SELECT MAX(CASE WHEN type = 'tax' THEN percentage END) FROM master_charges) / 100, 0) AS tax,
         ov.total AS total,
-        'Omzet Penjualan VIP (Membership)' AS description,
+        'Omzet Penjualan VIP (Membership) Termasuk PBJT 10%' AS description,
         ov.order_date AS sale_datetime,
         'vip' AS order_type
     FROM orders_vip ov
     LEFT JOIN order_vip_details ovd ON ovd.order_id = ov.id
     LEFT JOIN products p ON p.id = ovd.product_id
+    LEFT JOIN payments_vip pay ON pay.order_id = ov.id
     WHERE MONTH(ov.order_date) = ? AND YEAR(ov.order_date) = ?
+        AND p.product_name IS NOT NULL
+        AND ovd.quantity IS NOT NULL
+        AND ovd.unitcost IS NOT NULL
+        AND pay.method IS NOT NULL
     GROUP BY ov.id, ov.order_date, ov.total
 
     ORDER BY sale_datetime ASC
@@ -359,9 +366,6 @@ public function detailByProduk(Request $request)
         'grand_total' => $grandTotal,
     ]);
 }
-
-
-
 
 public function laporanKeuangan(Request $request)
 {
