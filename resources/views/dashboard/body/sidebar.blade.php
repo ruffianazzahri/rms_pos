@@ -45,6 +45,12 @@
                 @endif
                 <hr>
                 @if (auth()->user()->can('pos.financial'))
+                <li class="{{ Request::is('payment-history*') ? 'active' : '' }}">
+                    <a href="{{ route('payment-history.index') }}" class="svg-icon">
+                        <i class="fa-solid fa-clock"></i>
+                        <span class="ml-3">Riwayat Pembayaran</span>
+                    </a>
+                </li>
                 <li class="{{ Request::is('financial_report*') ? 'active' : '' }}">
                     <a href="{{ route('financial_report.index') }}" class="svg-icon">
                         <i class="fa-solid fa-book"></i>
@@ -58,14 +64,14 @@
                     </a>
                 </li>
                 @endif
-                @if (auth()->user()->can('pos.generaljournal'))
+                {{-- @if (auth()->user()->can('pos.generaljournal'))
                 <li class="{{ Request::is('general_journal*') ? 'active' : '' }}">
                     <a href="{{ route('general_journal.index') }}" class="svg-icon">
                         <i class="fa-solid fa-book"></i>
                         <span class="ml-3">Jurnal Umum</span>
                     </a>
                 </li>
-                @endif
+                @endif --}}
                 <hr>
                 @if (auth()->user()->can('orders.menu'))
                 <li>

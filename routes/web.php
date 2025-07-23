@@ -26,7 +26,7 @@ use App\Http\Controllers\Dashboard\GeneralJournalController;
 use App\Http\Controllers\Dashboard\MasterChargeController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
-
+use App\Http\Controllers\PaymentHistoryController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -147,6 +147,12 @@ Route::middleware(['permission:pos.menu'])->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/cashier', [CashierController::class, 'index'])->name('cashier.index');
     Route::post('/cashier/transaksi', [CashierController::class, 'store'])->name('cashier.transaksi');
+
+Route::get('/payment-history', [PaymentHistoryController::class, 'index'])->name('payment-history.index');
+
+// Menampilkan detail pembayaran berdasarkan order ID
+Route::get('/payment-history/{id}', [PaymentHistoryController::class, 'show'])->name('payment-history.show');
+Route::patch('/payment-history/void/{type}/{id}', [PaymentHistoryController::class, 'void'])->name('payment_history.void');
 });
 
 // ====== ORDERS ======

@@ -224,6 +224,7 @@ public function index(Request $request)
             FROM orders o
             INNER JOIN payments p ON o.id = p.order_id
             WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+            AND p.method IS NOT NULL
             GROUP BY DATE(o.order_date), p.method
         )
         UNION ALL
@@ -231,7 +232,7 @@ public function index(Request $request)
             SELECT
                 NULL AS order_id,
                 DATE(o.order_date) AS date,
-                'Pendapatan (Membership)' AS account,
+                p.method AS account,
                 0 AS debit,
                 SUM(o.total) AS credit,
                 'Omzet Penjualan - MEMBERSHIP (Termasuk PBJT 10%)' AS description,
@@ -239,8 +240,10 @@ public function index(Request $request)
                 NULL AS order_date,
                 'Otomatis dari data orders membership' AS image
             FROM orders_vip o
+            INNER JOIN payments_vip p ON o.id = p.order_id
             WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
-            GROUP BY DATE(o.order_date)
+            AND p.method IS NOT NULL
+            GROUP BY DATE(o.order_date), p.method
         )
         ORDER BY date ASC, account ASC
         LIMIT 50;
@@ -374,28 +377,26 @@ public function laporanKeuangan(Request $request)
     $to = $request->input('to');
 
     if ($range === 'harian') {
-        // Hasil: 2025-06-12, 2025-06-13, dst.
         $ordersQuery = "
-            SELECT DATE(order_date) as label, SUM(total) as total
-            FROM orders
-            WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
-            GROUP BY DATE(order_date)
+            SELECT DATE(o.order_date) as label, SUM(o.total) as total
+            FROM orders o
+            INNER JOIN payments p ON o.id = p.order_id
+            WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
+                AND o.total IS NOT NULL
+                AND o.order_date IS NOT NULL
+            GROUP BY DATE(o.order_date)
         ";
 
         $ordersVipQuery = "
             SELECT DATE(order_date) as label, SUM(total) as total
             FROM orders_vip
             WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE(order_date)
         ";
 
-        $unionQuery = "
-            ($ordersQuery)
-            UNION ALL
-            ($ordersVipQuery)
-            ORDER BY label
-        ";
-
+        $unionQuery = "($ordersQuery) UNION ALL ($ordersVipQuery) ORDER BY label";
         $data = DB::select($unionQuery, [
             now()->month, now()->year,
             now()->month, now()->year
@@ -403,110 +404,79 @@ public function laporanKeuangan(Request $request)
         $period = 'harian';
 
     } elseif ($range === 'mingguan') {
-        // Hasil: Minggu ke-x
         $ordersQuery = "
-            SELECT YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total
-            FROM orders
-            WHERE YEAR(order_date) = ?
-            GROUP BY YEAR(order_date), WEEK(order_date, 1)
+            SELECT YEAR(o.order_date) as year, WEEK(o.order_date, 1) as week, SUM(o.total) as total
+            FROM orders o
+            INNER JOIN payments p ON o.id = p.order_id
+            WHERE YEAR(o.order_date) = ?
+                AND o.total IS NOT NULL
+                AND o.order_date IS NOT NULL
+            GROUP BY YEAR(o.order_date), WEEK(o.order_date, 1)
         ";
 
         $ordersVipQuery = "
             SELECT YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total
             FROM orders_vip
             WHERE YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY YEAR(order_date), WEEK(order_date, 1)
         ";
 
-        $unionQuery = "
-            ($ordersQuery)
-            UNION ALL
-            ($ordersVipQuery)
-            ORDER BY year, week
-        ";
-
+        $unionQuery = "($ordersQuery) UNION ALL ($ordersVipQuery) ORDER BY year, week";
         $data = DB::select($unionQuery, [now()->year, now()->year]);
         $period = 'mingguan';
 
-    } elseif ($range === 'bulanan') {
-        // ✅ Hasil: 2025-06, 2025-05, dst.
-        $ordersQuery = "
-            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
-            FROM orders
-            WHERE YEAR(order_date) = ?
-            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
-        ";
-
-        $ordersVipQuery = "
-            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
-            FROM orders_vip
-            WHERE YEAR(order_date) = ?
-            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
-        ";
-
-        $unionQuery = "
-            ($ordersQuery)
-            UNION ALL
-            ($ordersVipQuery)
-            ORDER BY label
-        ";
-
-        $data = DB::select($unionQuery, [now()->year, now()->year]);
-        $period = 'bulanan';
-
     } elseif ($range === 'custom' && $from && $to) {
         $ordersQuery = "
-            SELECT DATE(order_date) as label, SUM(total) as total
-            FROM orders
-            WHERE order_date BETWEEN ? AND ?
-            GROUP BY DATE(order_date)
+            SELECT DATE(o.order_date) as label, SUM(o.total) as total
+            FROM orders o
+            INNER JOIN payments p ON o.id = p.order_id
+            WHERE o.order_date BETWEEN ? AND ?
+                AND o.total IS NOT NULL
+                AND o.order_date IS NOT NULL
+            GROUP BY DATE(o.order_date)
         ";
 
         $ordersVipQuery = "
             SELECT DATE(order_date) as label, SUM(total) as total
             FROM orders_vip
             WHERE order_date BETWEEN ? AND ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE(order_date)
         ";
 
-        $unionQuery = "
-            ($ordersQuery)
-            UNION ALL
-            ($ordersVipQuery)
-            ORDER BY label
-        ";
-
+        $unionQuery = "($ordersQuery) UNION ALL ($ordersVipQuery) ORDER BY label";
         $data = DB::select($unionQuery, [$from, $to, $from, $to]);
         $period = 'custom';
 
     } else {
         // Default ke bulanan
         $ordersQuery = "
-            SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
-            FROM orders
-            WHERE YEAR(order_date) = ?
-            GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+            SELECT DATE_FORMAT(o.order_date, '%Y-%m') as label, SUM(o.total) as total
+            FROM orders o
+            INNER JOIN payments p ON o.id = p.order_id
+            WHERE YEAR(o.order_date) = ?
+                AND o.total IS NOT NULL
+                AND o.order_date IS NOT NULL
+            GROUP BY DATE_FORMAT(o.order_date, '%Y-%m')
         ";
 
         $ordersVipQuery = "
             SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
             FROM orders_vip
             WHERE YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE_FORMAT(order_date, '%Y-%m')
         ";
 
-        $unionQuery = "
-            ($ordersQuery)
-            UNION ALL
-            ($ordersVipQuery)
-            ORDER BY label
-        ";
-
+        $unionQuery = "($ordersQuery) UNION ALL ($ordersVipQuery) ORDER BY label";
         $data = DB::select($unionQuery, [now()->year, now()->year]);
         $period = 'bulanan';
     }
 
-    // Agregasi data untuk menggabungkan total dari kedua tabel
     $aggregatedData = collect($data)->groupBy('label')->map(function ($items, $label) {
         return (object) [
             'label' => $label,
@@ -516,13 +486,7 @@ public function laporanKeuangan(Request $request)
         ];
     })->values();
 
-    return view('laporan.keuangan', [
-        'data' => $aggregatedData,
-        'range' => $range,
-        'from' => $from,
-        'to' => $to,
-        'period' => $period,
-    ]);
+    return view('laporan.keuangan', compact('aggregatedData', 'range', 'from', 'to', 'period'));
 }
 
 public function exportLaporan(Request $request)
@@ -538,6 +502,8 @@ public function exportLaporan(Request $request)
             SELECT DATE(order_date) as label, SUM(total) as total
             FROM orders
             WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE(order_date)
         ";
 
@@ -545,6 +511,8 @@ public function exportLaporan(Request $request)
             SELECT DATE(order_date) as label, SUM(total) as total
             FROM orders_vip
             WHERE MONTH(order_date) = ? AND YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE(order_date)
         ";
 
@@ -565,6 +533,8 @@ public function exportLaporan(Request $request)
             SELECT YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total
             FROM orders
             WHERE YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY YEAR(order_date), WEEK(order_date, 1)
         ";
 
@@ -572,6 +542,8 @@ public function exportLaporan(Request $request)
             SELECT YEAR(order_date) as year, WEEK(order_date, 1) as week, SUM(total) as total
             FROM orders_vip
             WHERE YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY YEAR(order_date), WEEK(order_date, 1)
         ";
 
@@ -589,6 +561,8 @@ public function exportLaporan(Request $request)
             SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
             FROM orders
             WHERE YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE_FORMAT(order_date, '%Y-%m')
         ";
 
@@ -596,6 +570,8 @@ public function exportLaporan(Request $request)
             SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
             FROM orders_vip
             WHERE YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE_FORMAT(order_date, '%Y-%m')
         ";
 
@@ -613,6 +589,8 @@ public function exportLaporan(Request $request)
             SELECT DATE(order_date) as label, SUM(total) as total
             FROM orders
             WHERE order_date BETWEEN ? AND ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE(order_date)
         ";
 
@@ -620,6 +598,8 @@ public function exportLaporan(Request $request)
             SELECT DATE(order_date) as label, SUM(total) as total
             FROM orders_vip
             WHERE order_date BETWEEN ? AND ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE(order_date)
         ";
 
@@ -637,6 +617,8 @@ public function exportLaporan(Request $request)
             SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
             FROM orders
             WHERE YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE_FORMAT(order_date, '%Y-%m')
         ";
 
@@ -644,6 +626,8 @@ public function exportLaporan(Request $request)
             SELECT DATE_FORMAT(order_date, '%Y-%m') as label, SUM(total) as total
             FROM orders_vip
             WHERE YEAR(order_date) = ?
+                AND total IS NOT NULL
+                AND order_date IS NOT NULL
             GROUP BY DATE_FORMAT(order_date, '%Y-%m')
         ";
 
