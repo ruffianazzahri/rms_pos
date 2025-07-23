@@ -303,70 +303,54 @@ public function detailByProduk(Request $request)
     $year = $request->input('year', date('Y'));
 
     $rawQuery = "
-WITH latest_charges AS (
     SELECT
-        MAX(CASE WHEN type = 'service' THEN percentage END) AS service_pct,
-        MAX(CASE WHEN type = 'tax' THEN percentage END) AS tax_pct
-    FROM master_charges
-),
-grouped_data AS (
-    SELECT
-        DATE(o.order_date) AS raw_date,
-        p.product_name AS product,
+        o.id AS order_id,
+        DATE_FORMAT(o.order_date, '%d %M %Y - %H:%i') AS date,
+        GROUP_CONCAT(CONCAT(p.product_name, ' (', od.quantity, ')') ORDER BY p.product_name SEPARATOR ', ') AS product,
         SUM(od.quantity) AS quantity,
-        SUM(od.unitcost) AS sale_total
+        GROUP_CONCAT(DISTINCT pay.method ORDER BY pay.method SEPARATOR ', ') AS payment_method,
+        SUM(od.unitcost) AS sale_subtotal,
+        o.total AS sale_total,
+        ROUND(SUM(od.unitcost) * (SELECT MAX(CASE WHEN type = 'service' THEN percentage END) FROM master_charges) / 100, 0) AS service_charge,
+        ROUND((SUM(od.unitcost) + SUM(od.unitcost) * (SELECT MAX(CASE WHEN type = 'service' THEN percentage END) FROM master_charges) / 100) * (SELECT MAX(CASE WHEN type = 'tax' THEN percentage END) FROM master_charges) / 100, 0) AS tax,
+        o.total AS total,
+        'Omzet Penjualan (Termasuk PBJT 10%)' AS description,
+        o.order_date AS sale_datetime,
+        'regular' AS order_type
     FROM orders o
     LEFT JOIN order_details od ON od.order_id = o.id
     LEFT JOIN products p ON p.id = od.product_id
+    LEFT JOIN payments pay ON pay.order_id = o.id
     WHERE MONTH(o.order_date) = ? AND YEAR(o.order_date) = ?
-    GROUP BY DATE(o.order_date), p.product_name
-),
-localized_dates AS (
-    SELECT
-        raw_date,
-        product,
-        quantity,
-        sale_total,
-        DAY(raw_date) AS day,
-        MONTH(raw_date) AS month_num,
-        YEAR(raw_date) AS year,
-        CASE MONTH(raw_date)
-            WHEN 1 THEN 'Januari'
-            WHEN 2 THEN 'Februari'
-            WHEN 3 THEN 'Maret'
-            WHEN 4 THEN 'April'
-            WHEN 5 THEN 'Mei'
-            WHEN 6 THEN 'Juni'
-            WHEN 7 THEN 'Juli'
-            WHEN 8 THEN 'Agustus'
-            WHEN 9 THEN 'September'
-            WHEN 10 THEN 'Oktober'
-            WHEN 11 THEN 'November'
-            WHEN 12 THEN 'Desember'
-        END AS month_name
-    FROM grouped_data
-)
-SELECT
-    NULL AS order_id,
-    CONCAT(ld.day, ' ', ld.month_name, ' ', ld.year) AS date,
-    ld.product,
-    ld.quantity,
-    ld.sale_total,
-    ROUND(ld.sale_total * lc.service_pct / 100, 0) AS service_charge,
-    ROUND((ld.sale_total + ld.sale_total * lc.service_pct / 100) * lc.tax_pct / 100, 0) AS tax,
-    ROUND(
-        ld.sale_total + ld.sale_total * lc.service_pct / 100 +
-        (ld.sale_total + ld.sale_total * lc.service_pct / 100) * lc.tax_pct / 100, 0
-    ) AS total,
-    'Omzet Penjualan (Termasuk PBJT 10%)' AS description,
-    ld.raw_date AS sale_date
-FROM localized_dates ld, latest_charges lc
-ORDER BY ld.raw_date ASC, ld.product ASC
-LIMIT 100;
+    GROUP BY o.id, o.order_date, o.total
 
+    UNION ALL
+
+    SELECT
+        ov.id AS order_id,
+        DATE_FORMAT(ov.order_date, '%d %M %Y - %H:%i') AS date,
+        GROUP_CONCAT(CONCAT(p.product_name, ' (', ovd.quantity, ')') ORDER BY p.product_name SEPARATOR ', ') AS product,
+        SUM(ovd.quantity) AS quantity,
+        'MEMBERSHIP' AS payment_method,
+        SUM(ovd.unitcost) AS sale_subtotal,
+        ov.total AS sale_total,
+        ROUND(SUM(ovd.unitcost) * (SELECT MAX(CASE WHEN type = 'service' THEN percentage END) FROM master_charges) / 100, 0) AS service_charge,
+        ROUND((SUM(ovd.unitcost) + SUM(ovd.unitcost) * (SELECT MAX(CASE WHEN type = 'service' THEN percentage END) FROM master_charges) / 100) * (SELECT MAX(CASE WHEN type = 'tax' THEN percentage END) FROM master_charges) / 100, 0) AS tax,
+        ov.total AS total,
+        'Omzet Penjualan VIP (Membership)' AS description,
+        ov.order_date AS sale_datetime,
+        'vip' AS order_type
+    FROM orders_vip ov
+    LEFT JOIN order_vip_details ovd ON ovd.order_id = ov.id
+    LEFT JOIN products p ON p.id = ovd.product_id
+    WHERE MONTH(ov.order_date) = ? AND YEAR(ov.order_date) = ?
+    GROUP BY ov.id, ov.order_date, ov.total
+
+    ORDER BY sale_datetime ASC
+    LIMIT 100;
     ";
 
-    $details = collect(DB::select($rawQuery, [$month, $year]));
+    $details = collect(DB::select($rawQuery, [$month, $year, $month, $year]));
 
     $grandTotal = $details->sum('total');
 
@@ -375,7 +359,6 @@ LIMIT 100;
         'grand_total' => $grandTotal,
     ]);
 }
-
 
 
 

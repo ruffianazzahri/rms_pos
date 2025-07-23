@@ -115,6 +115,7 @@
                                 <th>Tanggal</th>
                                 <th>Produk</th>
                                 <th>Qty</th>
+                                <th>Metode Pembayaran</th>
                                 <th>Harga Satuan</th>
                                 <th>Service</th>
                                 <th>Pajak</th>
@@ -394,6 +395,7 @@
                             <td>${item.date ?? '-'}</td>
                             <td>${item.product}</td>
                             <td>${item.quantity}</td>
+                            <td>${item.payment_method}</td>
                             <td>Rp ${parseInt(item.sale_total).toLocaleString('id-ID')}</td>
                             <td>Rp ${parseInt(item.service_charge).toLocaleString('id-ID')}</td>
                             <td>Rp ${parseInt(item.tax).toLocaleString('id-ID')}</td>
