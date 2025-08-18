@@ -76,7 +76,7 @@
                             <th>Photo</th>
                             <th>@sortablelink('product_name', 'name')</th>
                             <th>@sortablelink('category.name', 'category')</th>
-                            <th>@sortablelink('supplier.name', 'supplier')</th>
+                            <th>Supplier/Oleh</th>
                             <th>@sortablelink('selling_price', 'price')</th>
                             {{-- <th>Status</th> --}}
                             <th>Aksi</th>

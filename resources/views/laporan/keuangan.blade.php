@@ -34,7 +34,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($data as $row)
+            @foreach($aggregatedData as $row)
             <tr>
                 <td>{{ $row->date }}</td>
                 <td>Rp {{ number_format($row->omzet, 0, ',', '.') }}</td>

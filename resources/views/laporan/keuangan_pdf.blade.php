@@ -106,7 +106,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($data as $row)
+            @foreach($aggregatedData as $row)
             <tr>
                 <td>
                     @if($period === 'mingguan')
@@ -125,7 +125,7 @@
             <tr>
                 <th style="text-align: right;">Total</th>
                 <th>
-                    Rp {{ number_format($data->sum('total'), 0, ',', '.') }}
+                    Rp {{ number_format($aggregatedData->sum('total'), 0, ',', '.') }}
                 </th>
             </tr>
         </tfoot>
@@ -147,7 +147,7 @@
                         <hr style="width: 60%; margin: auto;">
                     </u>
                     <div style="margin-top: 5px;">Manager</div>
-                    <strong>Henry Lim</strong>
+                    <strong>Toni</strong>
                 </td>
                 <td style="text-align: center; width: 50%; border: none; vertical-align: top;">
                     Tertanda,<br><br>

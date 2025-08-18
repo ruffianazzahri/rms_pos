@@ -76,21 +76,26 @@
                                 @enderror
                             </div>
                             <div class="form-group col-md-6">
-                                <label for="supplier_id">Supplier <span class="text-danger">*</span></label>
-                                <select class="form-control" name="supplier_id" required>
-                                    <option selected="" disabled>-- Select Supplier --</option>
+                                <label for="supplier_id">Supplier/Oleh<span class="text-danger">*</span></label>
+                                {{-- <select class="form-control" name="supplier_id" required>
+                                    <option selected="" disabled>Wak T</option>
                                     @foreach ($suppliers as $supplier)
                                     <option value="{{ $supplier->id }}" {{ old('supplier_id')==$supplier->id ?
                                         'selected' : '' }} }}>{{ $supplier->name }}</option>
                                     @endforeach
+                                </select> --}}
+                                <select class="form-control" name="supplier_id" required>
+                                    <option selected disabled>Pilih Supplier</option>
+                                    <option value="3" {{ old('supplier_id')==3 ? 'selected' : '' }}>Wak Tige</option>
                                 </select>
+
                                 @error('supplier_id')
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
                                 @enderror
                             </div>
-                            <div class="form-group col-md-6">
+                            {{-- <div class="form-group col-md-6">
                                 <label for="product_garage">Product Garage</label>
                                 <input type="text" class="form-control @error('product_garage') is-invalid @enderror"
                                     id="product_garage" name="product_garage" value="{{ old('product_garage') }}">
@@ -129,8 +134,17 @@
                                     {{ $message }}
                                 </div>
                                 @enderror
-                            </div>
-                            <div class="form-group col-md-6">
+                            </div> --}}
+                            <input type="hidden" name="product_garage"
+                                value="{{ old('product_garage', Str::random(10)) }}">
+                            <input type="hidden" name="product_store" value="{{ old('product_store', rand(1, 100)) }}">
+
+                            <input type="hidden" name="buying_date"
+                                value="{{ old('buying_date', now()->subDays(rand(0, 30))->toDateString()) }}">
+                            <input type="hidden" name="expire_date"
+                                value="{{ old('expire_date', now()->addDays(rand(30, 365))->toDateString()) }}">
+
+                            {{-- <div class="form-group col-md-6">
                                 <label for="buying_price">Buying Price <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('buying_price') is-invalid @enderror"
                                     id="buying_price" name="buying_price" value="{{ old('buying_price') }}" required>
@@ -139,7 +153,10 @@
                                     {{ $message }}
                                 </div>
                                 @enderror
-                            </div>
+                            </div> --}}
+                            <input type="hidden" id="buying_price" name="buying_price"
+                                value="{{ old('buying_price') }}">
+
                             <div class="form-group col-md-6">
                                 <label for="selling_price">Selling Price <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('selling_price') is-invalid @enderror"
@@ -163,6 +180,16 @@
     </div>
     <!-- Page end  -->
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sellingInput = document.getElementById('selling_price');
+        const buyingInput = document.getElementById('buying_price');
+
+        sellingInput.addEventListener('input', function () {
+            buyingInput.value = this.value;
+        });
+    });
+</script>
 
 <script>
     $('#buying_date').datepicker({
