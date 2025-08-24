@@ -9,7 +9,7 @@ use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Str;
 class CustomerVipController extends Controller
 {
     /**
@@ -51,6 +51,8 @@ class CustomerVipController extends Controller
         ];
 
         $validatedData = $request->validate($rules);
+
+    $validatedData['id'] = (string) Str::uuid();
 
         CustomerVip::create($validatedData);
 

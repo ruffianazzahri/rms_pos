@@ -68,4 +68,16 @@ class CustomerVip extends Model
         $maskedPart = str_repeat('*', $length - $visible);
         return substr($phone, 0, $visible) . $maskedPart;
     }
+
+    protected static function boot()
+{
+    parent::boot();
+
+    static::creating(function ($model) {
+        if (empty($model->{$model->getKeyName()})) {
+            $model->{$model->getKeyName()} = (string) \Illuminate\Support\Str::uuid();
+        }
+    });
+}
+
 }
