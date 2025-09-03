@@ -17,6 +17,7 @@
     <div class="data-scrollbar" data-scroll="1">
         <nav class="iq-sidebar-menu">
             <ul id="iq-sidebar-toggle" class="iq-menu">
+                @if (auth()->user()->can('pos.dashboard'))
                 <li class="{{ Request::is('dashboard') ? 'active' : '' }}">
                     <a href="{{ route('dashboard') }}" class="svg-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor"
@@ -28,7 +29,7 @@
                         <span class="ml-4">Beranda</span>
                     </a>
                 </li>
-
+                @endif
                 @if (auth()->user()->can('pos.menu'))
                 {{-- <li class="{{ Request::is('pos') ? 'active' : '' }}">
                     <a href="{{ route('pos.index') }}" class="svg-icon">

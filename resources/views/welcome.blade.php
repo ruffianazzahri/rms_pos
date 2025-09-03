@@ -186,9 +186,16 @@
     @if (Route::has('login'))
     <div class="auth-links">
         @auth
+        {{-- kalau user punya role Admin, arahkan ke /cashier --}}
+        @if(auth()->user()->hasRole('Admin'))
+        <a href="{{ url('/cashier') }}">
+            <i class="fas fa-cash-register"></i> Cashier
+        </a>
+        @else
         <a href="{{ url('/dashboard') }}">
             <i class="fas fa-tachometer-alt"></i> Dashboard
         </a>
+        @endif
         @else
         <a href="{{ route('login') }}">
             <i class="fas fa-sign-in-alt"></i> Login
@@ -201,6 +208,7 @@
         @endauth
     </div>
     @endif
+
 
 
     {{-- Template Layout --}}
