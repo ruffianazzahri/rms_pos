@@ -1,5 +1,5 @@
 /*
-Template: RMS POS - Point Of Sales
+Template: POS - Point Of Sales
 Author: iqonicthemes.in
 Design and Developed by: iqonicthemes.in
 NOTE: This file contains the styling for responsive Template.

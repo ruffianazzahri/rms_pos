@@ -139,7 +139,7 @@
 
     {{-- Catatan RMS --}}
     <div class="footer-note">
-        Dokumen ini dicetak menggunakan <strong>RMS POS</strong> oleh <strong>Rezekindo Makmur Sentosa</strong>.
+        Dokumen ini dicetak menggunakan <strong>POS</strong> oleh <strong>Rezekindo Makmur Sentosa</strong>.
     </div>
 
 </body>

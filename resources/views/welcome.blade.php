@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RMS POS</title>
+    <title>POS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
     <!-- Favicon -->
@@ -226,17 +226,17 @@
             <div class="main-content">
                 <img class="img-fluid" src="{{ asset('assets/images/logo2.png') }}" style="height: auto; width: 300px;"
                     alt="Login Image">
-                <h2 class="title">Selamat Datang di RMS POS</h2>
+                <h2 class="title">Selamat Datang di POS</h2>
                 {{-- <div class="subtitle">
                     <span>Bikin transaksi jadi lebih mudah</span>
                     <div class="underline"></div>
                 </div> --}}
                 <p class="description">
-                    RMS POS membantu UMKM, restoran, dan toko untuk mencatat penjualan, mengelola produk, dan
+                    POS membantu UMKM, restoran, dan toko untuk mencatat penjualan, mengelola produk, dan
                     mempercepat proses transaksi harian.
                 </p>
                 <p class="text-muted small" style="margin-top: 10px">
-                    &copy; {{ date('Y') }} RMS POS – Rezekindo Makmur Sentosa. Semua hak cipta dilindungi.
+                    &copy; {{ date('Y') }} POS – Rezekindo Makmur Sentosa. Semua hak cipta dilindungi.
                 </p>
             </div>
 

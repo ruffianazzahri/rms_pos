@@ -11,7 +11,7 @@
                             <div class="p-3">
 
                                 <h2 class="mb-2">Register</h2>
-                                <p>Create your RMS POS account.</p>
+                                <p>Create your POS account.</p>
 
                                 <form method="POST" action="{{ route('register') }}">
                                     @csrf

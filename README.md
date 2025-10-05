@@ -1,1 +1,1 @@
-RMS POS
+POS
